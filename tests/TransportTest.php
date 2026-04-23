@@ -181,14 +181,14 @@ final class TransportTest extends TestCase
     public function testNonEnvelopeJsonYieldsAPIErrorWithTruncatedBody(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(500, ['not' => 'an_envelope']);
+        $mock->enqueueJson(500, ['not' => str_repeat('x', 300)]);
 
         try {
             $this->transport($mock, ['maxRetries' => 0])->request('GET', '/v1/ping');
             self::fail('Expected APIError');
         } catch (APIError $e) {
             self::assertNull($e->code);
-            self::assertStringContainsString('not', $e->getMessage());
+            self::assertSame(200, strlen($e->getMessage()));
         }
     }
 
@@ -213,8 +213,15 @@ final class TransportTest extends TestCase
                 ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r']],
             );
         }
-        $this->expectException(APIError::class);
-        $this->transport($mock)->request('GET', '/v1/ping');
+
+        try {
+            $this->transport($mock)->request('GET', '/v1/ping');
+            self::fail('Expected APIError');
+        } catch (APIError) {
+            // expected
+        }
+
+        self::assertCount(3, $mock->requests());
     }
 
     public function testRetryAfterHeaderHonoredOn429(): void
@@ -248,8 +255,14 @@ final class TransportTest extends TestCase
                 ['Retry-After' => '1'],
             );
         }
-        $this->expectException(RateLimitError::class);
-        $this->transport($mock)->request('GET', '/v1/ping');
+
+        try {
+            $this->transport($mock)->request('GET', '/v1/ping');
+            self::fail('Expected RateLimitError');
+        } catch (RateLimitError $e) {
+            self::assertSame(1, $e->retryAfter);
+            self::assertSame('rate_limited', $e->code);
+        }
     }
 
     public function test4xxNon429DoesNotRetry(): void
@@ -313,5 +326,31 @@ final class TransportTest extends TestCase
         }
         $this->expectException(APIConnectionError::class);
         $this->transport($mock)->request('GET', '/v1/ping');
+    }
+
+    public function testRetryAfterHttpDateIsHonored(): void
+    {
+        $mock = new MockTransport();
+        // Future HTTP-date roughly 5 seconds out
+        $future = gmdate('D, d M Y H:i:s \G\M\T', time() + 5);
+        $mock->enqueueJson(
+            429,
+            ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'request_id' => 'r']],
+            ['Retry-After' => $future],
+        );
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $sleeps = [];
+        $t = $this->transport($mock, [
+            'sleeper' => function (int $ms) use (&$sleeps): void {
+                $sleeps[] = $ms;
+            },
+        ]);
+        $t->request('GET', '/v1/ping');
+
+        self::assertCount(1, $sleeps);
+        // Sleep should be ≥ 0 ms (clamped) and ≤ 6000 ms (some jitter in timing)
+        self::assertGreaterThanOrEqual(0, $sleeps[0]);
+        self::assertLessThanOrEqual(6000, $sleeps[0]);
     }
 }
