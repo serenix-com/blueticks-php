@@ -4,7 +4,8 @@
          bootstrap="vendor/autoload.php"
          colors="true"
          failOnWarning="true"
-         failOnRisky="true">
+         failOnRisky="true"
+         failOnDeprecation="true">
     <testsuites>
         <testsuite name="Blueticks">
             <directory>tests</directory>
