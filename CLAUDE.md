@@ -218,7 +218,7 @@ $this->account = new Resources\AccountResource($this);
 /** Ping the API. */
 public function ping(): Types\Ping
 {
-    return (new Resources\PingResource($this))->check();
+    return (new Resources\PingResource($this))->retrieve();
 }
 // REGEN-BOUNDARY: inline helpers end
 ```
