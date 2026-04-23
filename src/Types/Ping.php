@@ -6,15 +6,15 @@ namespace Blueticks\Types;
 
 use Blueticks\Errors\ValidationError;
 
-final readonly class Ping
+final class Ping
 {
     /**
      * @param list<string> $scopes
      */
     public function __construct(
-        public string $account_id,
-        public string $key_prefix,
-        public array $scopes,
+        public readonly string $account_id,
+        public readonly string $key_prefix,
+        public readonly array $scopes,
     ) {
     }
 

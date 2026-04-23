@@ -6,13 +6,13 @@ namespace Blueticks\Types;
 
 use Blueticks\Errors\ValidationError;
 
-final readonly class Account
+final class Account
 {
     public function __construct(
-        public string $id,
-        public string $name,
-        public ?string $timezone,
-        public string $created_at,
+        public readonly string $id,
+        public readonly string $name,
+        public readonly ?string $timezone,
+        public readonly string $created_at,
     ) {
     }
 

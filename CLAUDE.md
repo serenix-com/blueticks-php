@@ -35,8 +35,8 @@ If a regenerator change requires editing any file not listed under MAY, stop and
 
 One file per response schema at `src/Types/<PascalName>.php`. `PascalName` is the OpenAPI schema key in PascalCase.
 
-Each file exports one `final readonly class` with:
-- Typed promoted constructor properties for every schema field, in the schema's declared order.
+Each file exports one `final class` (NOT `final readonly class` — that's PHP 8.2+; we support 8.1) with:
+- Typed promoted constructor properties marked `public readonly` individually, in the schema's declared order.
 - A `public static function fromArray(array $data): self` factory that asserts each required field's type and throws `Blueticks\Errors\ValidationError` on failure.
 - Inline private `assert*` helper methods — no shared helper class; each file is self-contained.
 
@@ -51,13 +51,13 @@ namespace Blueticks\Types;
 
 use Blueticks\Errors\ValidationError;
 
-final readonly class Account
+final class Account
 {
     public function __construct(
-        public string $id,
-        public string $name,
-        public ?string $timezone,
-        public string $created_at,
+        public readonly string $id,
+        public readonly string $name,
+        public readonly ?string $timezone,
+        public readonly string $created_at,
     ) {
     }
 
