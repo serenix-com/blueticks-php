@@ -14,6 +14,7 @@ final class Blueticks
 
     // REGEN-BOUNDARY: resource properties start
     public readonly Resources\AccountResource $account;
+    public readonly Resources\MessagesResource $messages;
     // REGEN-BOUNDARY: resource properties end
 
     /**
@@ -52,6 +53,7 @@ final class Blueticks
 
         // REGEN-BOUNDARY: resource attachments start
         $this->account = new Resources\AccountResource($this);
+        $this->messages = new Resources\MessagesResource($this);
         // REGEN-BOUNDARY: resource attachments end
     }
 
