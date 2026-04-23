@@ -13,7 +13,7 @@ final class Blueticks
     private Transport $transport;
 
     // REGEN-BOUNDARY: resource properties start
-    // (Regenerated: resource property declarations are added/removed here.)
+    public readonly Resources\AccountResource $account;
     // REGEN-BOUNDARY: resource properties end
 
     /**
@@ -51,7 +51,7 @@ final class Blueticks
         ]);
 
         // REGEN-BOUNDARY: resource attachments start
-        // (Regenerated: resource attachment assignments are added/removed here.)
+        $this->account = new Resources\AccountResource($this);
         // REGEN-BOUNDARY: resource attachments end
     }
 
@@ -69,7 +69,13 @@ final class Blueticks
     }
 
     // REGEN-BOUNDARY: inline helpers start
-    // (Regenerated: e.g. `public function ping(): Types\Ping { ... }`.)
+    /**
+     * Health check.
+     */
+    public function ping(): Types\Ping
+    {
+        return (new Resources\PingResource($this))->retrieve();
+    }
     // REGEN-BOUNDARY: inline helpers end
 
     private static function envOrNull(string $name): ?string
