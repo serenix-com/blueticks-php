@@ -10,6 +10,10 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Base exception for all Blueticks SDK errors.
  *
+ * NOTE: PHP's Exception::getCode() is final and always returns 0 for these
+ * exceptions. Use $err->statusCode (HTTP status) or $err->code (string API
+ * error code like "authentication_required") instead.
+ *
  * @property-read ?string $code  String error code (virtual; PHP's Exception::$code is an untyped int
  *                                so we cannot redeclare with a type — exposed via __get instead).
  */
@@ -49,7 +53,9 @@ class BluetickError extends Exception
         if ($name === 'code') {
             return $this->errorCode;
         }
-        return null;
+        throw new \BadMethodCallException(
+            sprintf('Undefined property: %s::$%s', static::class, $name)
+        );
     }
 
     /**

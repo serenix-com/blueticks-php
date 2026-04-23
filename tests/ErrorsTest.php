@@ -110,4 +110,30 @@ final class ErrorsTest extends TestCase
             message: 'bad key',
         );
     }
+
+    public function testIssetCodeTrueWhenSet(): void
+    {
+        $err = new BluetickError(code: 'some_code', message: '');
+        self::assertTrue(isset($err->code));
+    }
+
+    public function testIssetCodeFalseWhenNull(): void
+    {
+        $err = new BluetickError(message: 'no code here');
+        self::assertFalse(isset($err->code));
+    }
+
+    public function testUnknownPropertyThrows(): void
+    {
+        $err = new BluetickError(message: 'x');
+        $this->expectException(\BadMethodCallException::class);
+        /** @phpstan-ignore-next-line intentional typo for runtime check */
+        $_ = $err->nonExistentField;
+    }
+
+    public function testGetCodeAlwaysReturnsZero(): void
+    {
+        $err = new BluetickError(statusCode: 401, code: 'auth_required', message: 'bad key');
+        self::assertSame(0, $err->getCode(), 'getCode() is inherited/final; use statusCode or $err->code instead');
+    }
 }
