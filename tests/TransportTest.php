@@ -191,4 +191,127 @@ final class TransportTest extends TestCase
             self::assertStringContainsString('not', $e->getMessage());
         }
     }
+
+    public function testRetryOn503ThenSuccess(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r1']]);
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $result = $this->transport($mock)->request('GET', '/v1/ping');
+
+        self::assertSame(['ok' => true], $result);
+        self::assertCount(2, $mock->requests());
+    }
+
+    public function testRetryExhaustedOn5xxThrowsAPIError(): void
+    {
+        $mock = new MockTransport();
+        for ($i = 0; $i < 3; $i++) {
+            $mock->enqueueJson(
+                503,
+                ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r']],
+            );
+        }
+        $this->expectException(APIError::class);
+        $this->transport($mock)->request('GET', '/v1/ping');
+    }
+
+    public function testRetryAfterHeaderHonoredOn429(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(
+            429,
+            ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'request_id' => 'r']],
+            ['Retry-After' => '7'],
+        );
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $sleeps = [];
+        $t = $this->transport($mock, [
+            'sleeper' => function (int $ms) use (&$sleeps): void {
+                $sleeps[] = $ms;
+            },
+        ]);
+        $t->request('GET', '/v1/ping');
+
+        self::assertSame([7000], $sleeps);
+    }
+
+    public function test429AfterRetriesYieldsRateLimitError(): void
+    {
+        $mock = new MockTransport();
+        for ($i = 0; $i < 3; $i++) {
+            $mock->enqueueJson(
+                429,
+                ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'request_id' => 'r']],
+                ['Retry-After' => '1'],
+            );
+        }
+        $this->expectException(RateLimitError::class);
+        $this->transport($mock)->request('GET', '/v1/ping');
+    }
+
+    public function test4xxNon429DoesNotRetry(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(404, ['error' => ['code' => 'not_found', 'message' => 'missing', 'request_id' => 'r']]);
+
+        try {
+            $this->transport($mock)->request('GET', '/v1/missing');
+            self::fail();
+        } catch (NotFoundError) {
+            // expected
+        }
+
+        self::assertCount(1, $mock->requests());
+    }
+
+    public function testPostWithoutIdempotencyKeyDoesNotRetryOn5xx(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r']]);
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $this->expectException(APIError::class);
+        $this->transport($mock)->request('POST', '/v1/things', ['body' => ['x' => 1]]);
+    }
+
+    public function testPostWithIdempotencyKeyDoesRetryOn5xx(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r']]);
+        $mock->enqueueJson(200, ['id' => 'x']);
+
+        $result = $this->transport($mock)->request('POST', '/v1/things', [
+            'body' => ['x' => 1],
+            'headers' => ['Idempotency-Key' => 'k1'],
+        ]);
+
+        self::assertSame(['id' => 'x'], $result);
+    }
+
+    public function testNetworkErrorRetries(): void
+    {
+        $mock = new MockTransport();
+        $factory = $mock->factories();
+        $req = $factory->createRequest('GET', 'https://api.blueticks.test/v1/ping');
+        $mock->enqueueNetworkError(new NetworkException('conn reset', $req));
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $result = $this->transport($mock)->request('GET', '/v1/ping');
+        self::assertSame(['ok' => true], $result);
+    }
+
+    public function testNetworkErrorExhaustionThrowsAPIConnectionError(): void
+    {
+        $mock = new MockTransport();
+        $factory = $mock->factories();
+        for ($i = 0; $i < 3; $i++) {
+            $req = $factory->createRequest('GET', 'https://api.blueticks.test/v1/ping');
+            $mock->enqueueNetworkError(new NetworkException('conn reset', $req));
+        }
+        $this->expectException(APIConnectionError::class);
+        $this->transport($mock)->request('GET', '/v1/ping');
+    }
 }
