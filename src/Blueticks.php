@@ -16,6 +16,7 @@ final class Blueticks
     public readonly Resources\AccountResource $account;
     public readonly Resources\MessagesResource $messages;
     public readonly Resources\WebhooksResource $webhooks;
+    public readonly Resources\AudiencesResource $audiences;
     // REGEN-BOUNDARY: resource properties end
 
     /**
@@ -56,6 +57,7 @@ final class Blueticks
         $this->account = new Resources\AccountResource($this);
         $this->messages = new Resources\MessagesResource($this);
         $this->webhooks = new Resources\WebhooksResource($this);
+        $this->audiences = new Resources\AudiencesResource($this);
         // REGEN-BOUNDARY: resource attachments end
     }
 
