@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Types\Page;
 use Blueticks\Types\Webhook;
 use Blueticks\Types\WebhookCreateResult;
 
@@ -24,21 +25,26 @@ final class WebhooksResource extends BaseResource
     }
 
     /**
-     * @return list<Webhook>
+     * List webhooks, newest first. Cursor-paginated.
+     *
+     * @return Page<Webhook>
      */
-    public function list(): array
+    public function list(?int $limit = null, ?string $cursor = null): Page
     {
-        /** @var array<int|string, mixed> $raw */
-        $raw = $this->client->request('GET', '/v1/webhooks');
-        $items = is_array($raw['data'] ?? null) ? $raw['data'] : $raw;
-        $out = [];
-        foreach ($items as $row) {
-            if (is_array($row)) {
-                /** @var array<string, mixed> $row */
-                $out[] = Webhook::fromArray($row);
-            }
+        $query = [];
+        if ($limit !== null) {
+            $query['limit'] = $limit;
         }
-        return $out;
+        if ($cursor !== null) {
+            $query['cursor'] = $cursor;
+        }
+        /** @var array<string, mixed> $raw */
+        $raw = $this->client->request(
+            'GET',
+            '/v1/webhooks',
+            $query !== [] ? ['query' => $query] : [],
+        );
+        return Page::fromArray($raw, fn (array $row): Webhook => Webhook::fromArray($row));
     }
 
     public function get(string $id): Webhook

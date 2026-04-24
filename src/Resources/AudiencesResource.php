@@ -8,6 +8,7 @@ use Blueticks\BaseResource;
 use Blueticks\Types\AppendContactsResult;
 use Blueticks\Types\Audience;
 use Blueticks\Types\Contact;
+use Blueticks\Types\Page;
 
 final class AudiencesResource extends BaseResource
 {
@@ -25,21 +26,26 @@ final class AudiencesResource extends BaseResource
     }
 
     /**
-     * @return list<Audience>
+     * List audiences, newest first. Cursor-paginated.
+     *
+     * @return Page<Audience>
      */
-    public function list(): array
+    public function list(?int $limit = null, ?string $cursor = null): Page
     {
-        /** @var array<int|string, mixed> $raw */
-        $raw = $this->client->request('GET', '/v1/audiences');
-        $items = is_array($raw['data'] ?? null) ? $raw['data'] : $raw;
-        $out = [];
-        foreach ($items as $row) {
-            if (is_array($row)) {
-                /** @var array<string, mixed> $row */
-                $out[] = Audience::fromArray($row);
-            }
+        $query = [];
+        if ($limit !== null) {
+            $query['limit'] = $limit;
         }
-        return $out;
+        if ($cursor !== null) {
+            $query['cursor'] = $cursor;
+        }
+        /** @var array<string, mixed> $raw */
+        $raw = $this->client->request(
+            'GET',
+            '/v1/audiences',
+            $query !== [] ? ['query' => $query] : [],
+        );
+        return Page::fromArray($raw, fn (array $row): Audience => Audience::fromArray($row));
     }
 
     public function get(string $id, ?int $page = null): Audience
