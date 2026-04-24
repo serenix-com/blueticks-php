@@ -72,10 +72,15 @@ final class CampaignsResourceTest extends TestCase
     public function testList(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, [self::campaignFixture()]);
+        $mock->enqueueJson(200, [
+            'data' => [self::campaignFixture()],
+            'has_more' => false,
+            'next_cursor' => null,
+        ]);
 
-        $list = $this->client($mock)->campaigns->list();
-        self::assertCount(1, $list);
+        $page = $this->client($mock)->campaigns->list();
+        self::assertCount(1, $page->data);
+        self::assertFalse($page->hasMore);
     }
 
     public function testGet(): void

@@ -68,11 +68,17 @@ final class WebhooksResourceTest extends TestCase
     public function testList(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, [self::webhookFixture(), self::webhookFixture()]);
+        $mock->enqueueJson(200, [
+            'data' => [self::webhookFixture(), self::webhookFixture()],
+            'has_more' => false,
+            'next_cursor' => null,
+        ]);
 
-        $list = $this->client($mock)->webhooks->list();
-        self::assertCount(2, $list);
-        self::assertInstanceOf(Webhook::class, $list[0]);
+        $page = $this->client($mock)->webhooks->list();
+        self::assertCount(2, $page->data);
+        self::assertInstanceOf(Webhook::class, $page->data[0]);
+        self::assertFalse($page->hasMore);
+        self::assertNull($page->nextCursor);
 
         $req = $mock->requests()[0];
         self::assertSame('GET', $req->getMethod());

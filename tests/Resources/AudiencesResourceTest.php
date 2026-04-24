@@ -71,10 +71,15 @@ final class AudiencesResourceTest extends TestCase
     public function testList(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, [self::audienceFixture()]);
+        $mock->enqueueJson(200, [
+            'data' => [self::audienceFixture()],
+            'has_more' => false,
+            'next_cursor' => null,
+        ]);
 
-        $list = $this->client($mock)->audiences->list();
-        self::assertCount(1, $list);
+        $page = $this->client($mock)->audiences->list();
+        self::assertCount(1, $page->data);
+        self::assertFalse($page->hasMore);
     }
 
     public function testGetWithPage(): void

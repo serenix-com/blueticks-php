@@ -36,26 +36,25 @@ final class Page
     public static function fromArray(array $raw, callable $mapItem): self
     {
         if (!is_array($raw['data'] ?? null)) {
-            throw new ValidationError("Expected 'data' to be an array on paginated response");
+            throw new ValidationError(message: "Expected 'data' to be an array on paginated response");
         }
         if (!is_bool($raw['has_more'] ?? null)) {
-            throw new ValidationError("Expected 'has_more' to be a boolean on paginated response");
+            throw new ValidationError(message: "Expected 'has_more' to be a boolean on paginated response");
         }
         $nextCursor = $raw['next_cursor'] ?? null;
         if ($nextCursor !== null && !is_string($nextCursor)) {
-            throw new ValidationError("Expected 'next_cursor' to be a string or null on paginated response");
+            throw new ValidationError(message: "Expected 'next_cursor' to be a string or null on paginated response");
         }
 
         $items = [];
         foreach ($raw['data'] as $row) {
             if (!is_array($row)) {
-                throw new ValidationError("Expected each element of 'data' to be an object");
+                throw new ValidationError(message: "Expected each element of 'data' to be an object");
             }
             /** @var array<string, mixed> $row */
             $items[] = $mapItem($row);
         }
 
-        /** @phpstan-ignore-next-line new.static */
         return new self($items, $raw['has_more'], $nextCursor);
     }
 }
