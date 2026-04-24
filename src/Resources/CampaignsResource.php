@@ -6,6 +6,7 @@ namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
 use Blueticks\Types\Campaign;
+use Blueticks\Types\Page;
 
 final class CampaignsResource extends BaseResource
 {
@@ -26,21 +27,26 @@ final class CampaignsResource extends BaseResource
     }
 
     /**
-     * @return list<Campaign>
+     * List campaigns, newest first. Cursor-paginated.
+     *
+     * @return Page<Campaign>
      */
-    public function list(): array
+    public function list(?int $limit = null, ?string $cursor = null): Page
     {
-        /** @var array<int|string, mixed> $raw */
-        $raw = $this->client->request('GET', '/v1/campaigns');
-        $items = is_array($raw['data'] ?? null) ? $raw['data'] : $raw;
-        $out = [];
-        foreach ($items as $row) {
-            if (is_array($row)) {
-                /** @var array<string, mixed> $row */
-                $out[] = Campaign::fromArray($row);
-            }
+        $query = [];
+        if ($limit !== null) {
+            $query['limit'] = $limit;
         }
-        return $out;
+        if ($cursor !== null) {
+            $query['cursor'] = $cursor;
+        }
+        /** @var array<string, mixed> $raw */
+        $raw = $this->client->request(
+            'GET',
+            '/v1/campaigns',
+            $query !== [] ? ['query' => $query] : [],
+        );
+        return Page::fromArray($raw, fn (array $row): Campaign => Campaign::fromArray($row));
     }
 
     public function get(string $id): Campaign

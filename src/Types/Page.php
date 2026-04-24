@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Blueticks\Types;
+
+use Blueticks\Errors\ValidationError;
+
+/**
+ * Cursor-paginated list envelope returned by every v1 list endpoint.
+ *
+ * Iterate `data` for the current page; pass `nextCursor` back as the
+ * `cursor` argument of the next `list()` call to continue. When
+ * `hasMore` is false, `nextCursor` is null and iteration is complete.
+ *
+ * @template T of object
+ */
+final class Page
+{
+    /**
+     * @param list<T>      $data
+     */
+    public function __construct(
+        public readonly array $data,
+        public readonly bool $hasMore,
+        public readonly ?string $nextCursor,
+    ) {
+    }
+
+    /**
+     * @template  U of object
+     * @param    array<string, mixed>      $raw
+     * @param    callable(array<string, mixed>): U $mapItem
+     * @return   self<U>
+     */
+    public static function fromArray(array $raw, callable $mapItem): self
+    {
+        if (!is_array($raw['data'] ?? null)) {
+            throw new ValidationError("Expected 'data' to be an array on paginated response");
+        }
+        if (!is_bool($raw['has_more'] ?? null)) {
+            throw new ValidationError("Expected 'has_more' to be a boolean on paginated response");
+        }
+        $nextCursor = $raw['next_cursor'] ?? null;
+        if ($nextCursor !== null && !is_string($nextCursor)) {
+            throw new ValidationError("Expected 'next_cursor' to be a string or null on paginated response");
+        }
+
+        $items = [];
+        foreach ($raw['data'] as $row) {
+            if (!is_array($row)) {
+                throw new ValidationError("Expected each element of 'data' to be an object");
+            }
+            /** @var array<string, mixed> $row */
+            $items[] = $mapItem($row);
+        }
+
+        /** @phpstan-ignore-next-line new.static */
+        return new self($items, $raw['has_more'], $nextCursor);
+    }
+}

@@ -6,6 +6,7 @@ namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
 use Blueticks\Types\Message;
+use Blueticks\Types\Page;
 
 final class MessagesResource extends BaseResource
 {
@@ -36,5 +37,28 @@ final class MessagesResource extends BaseResource
     {
         $raw = $this->client->request('GET', "/v1/messages/{$id}");
         return Message::fromArray($raw);
+    }
+
+    /**
+     * List messages sent through the API, newest first. Cursor-paginated.
+     *
+     * @return Page<Message>
+     */
+    public function list(?int $limit = null, ?string $cursor = null): Page
+    {
+        $query = [];
+        if ($limit !== null) {
+            $query['limit'] = $limit;
+        }
+        if ($cursor !== null) {
+            $query['cursor'] = $cursor;
+        }
+        /** @var array<string, mixed> $raw */
+        $raw = $this->client->request(
+            'GET',
+            '/v1/messages',
+            $query !== [] ? ['query' => $query] : [],
+        );
+        return Page::fromArray($raw, fn (array $row): Message => Message::fromArray($row));
     }
 }
