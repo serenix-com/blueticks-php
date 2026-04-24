@@ -18,6 +18,11 @@ final class Blueticks
     public readonly Resources\WebhooksResource $webhooks;
     public readonly Resources\AudiencesResource $audiences;
     public readonly Resources\CampaignsResource $campaigns;
+    public readonly Resources\ChatsResource $chats;
+    public readonly Resources\ContactsResource $contacts;
+    public readonly Resources\EnginesResource $engines;
+    public readonly Resources\GroupsResource $groups;
+    public readonly Resources\UtilsResource $utils;
     // REGEN-BOUNDARY: resource properties end
 
     /**
@@ -60,6 +65,11 @@ final class Blueticks
         $this->webhooks = new Resources\WebhooksResource($this);
         $this->audiences = new Resources\AudiencesResource($this);
         $this->campaigns = new Resources\CampaignsResource($this);
+        $this->chats = new Resources\ChatsResource($this);
+        $this->contacts = new Resources\ContactsResource($this);
+        $this->engines = new Resources\EnginesResource($this);
+        $this->groups = new Resources\GroupsResource($this);
+        $this->utils = new Resources\UtilsResource($this);
         // REGEN-BOUNDARY: resource attachments end
     }
 
