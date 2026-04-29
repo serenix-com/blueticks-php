@@ -67,7 +67,14 @@ final class ChatsResource extends BaseResource
     }
 
     /**
-     * @param array<string, mixed> $opts Accepts: mode ('latest'|'history'), query, since, until, limit, cursor
+     * @param array<string, mixed> $opts Accepts:
+     *   - mode ('latest'|'history')
+     *   - query (free-text search)
+     *   - since / until (ISO 8601 date-time bounds)
+     *   - limit / cursor (pagination)
+     *   - message_types: list<string> of allowed message kinds (e.g.
+     *     ['document'] for PDFs). When omitted, server-side default-excludes
+     *     system events (gp2/revoked/newsletter_notification).
      * @return array<string, mixed>
      */
     public function listMessages(string $chatId, array $opts = []): array
@@ -77,6 +84,17 @@ final class ChatsResource extends BaseResource
             if (array_key_exists($k, $opts)) {
                 $q[$k] = $opts[$k];
             }
+        }
+        // message_types: server accepts comma-separated form for OpenAPI
+        // `style: form, explode: false`. Each item must be a valid message
+        // kind (chat/image/video/document/audio/ptt/sticker/gif/ptv/
+        // poll_creation/location/vcard/revoked).
+        if (
+            array_key_exists('message_types', $opts)
+            && is_array($opts['message_types'])
+            && $opts['message_types'] !== []
+        ) {
+            $q['message_types'] = implode(',', array_map('strval', $opts['message_types']));
         }
         return $this->client->request(
             'GET',
