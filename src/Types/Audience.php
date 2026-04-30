@@ -14,11 +14,11 @@ final class Audience
     public function __construct(
         public readonly string $id,
         public readonly string $name,
-        public readonly int $contactCount,
-        public readonly string $createdAt,
+        public readonly int $contact_count,
+        public readonly string $created_at,
         public readonly ?array $contacts,
         public readonly ?int $page,
-        public readonly ?bool $hasMore,
+        public readonly ?bool $has_more,
     ) {
     }
 
@@ -68,11 +68,11 @@ final class Audience
         return new self(
             id: $raw['id'],
             name: $raw['name'],
-            contactCount: $raw['contact_count'],
-            createdAt: $raw['created_at'],
+            contact_count: $raw['contact_count'],
+            created_at: $raw['created_at'],
             contacts: $contacts,
             page: $page,
-            hasMore: $hasMore,
+            has_more: $hasMore,
         );
     }
 

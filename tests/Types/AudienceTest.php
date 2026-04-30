@@ -19,11 +19,11 @@ final class AudienceTest extends TestCase
         ]);
         self::assertSame('aud_1', $a->id);
         self::assertSame('Customers', $a->name);
-        self::assertSame(42, $a->contactCount);
-        self::assertSame('2026-04-23T10:00:00Z', $a->createdAt);
+        self::assertSame(42, $a->contact_count);
+        self::assertSame('2026-04-23T10:00:00Z', $a->created_at);
         self::assertNull($a->contacts);
         self::assertNull($a->page);
-        self::assertNull($a->hasMore);
+        self::assertNull($a->has_more);
     }
 
     public function testFromArrayWithContacts(): void
@@ -49,6 +49,6 @@ final class AudienceTest extends TestCase
         self::assertSame('ct_1', $a->contacts[0]->id);
         self::assertSame(['name' => 'Alice'], $a->contacts[0]->variables);
         self::assertSame(1, $a->page);
-        self::assertFalse($a->hasMore);
+        self::assertFalse($a->has_more);
     }
 }

@@ -14,7 +14,7 @@ final class WebhookEvent
     public function __construct(
         public readonly string $id,
         public readonly string $type,
-        public readonly string $createdAt,
+        public readonly string $created_at,
         public readonly array $data,
     ) {
     }
@@ -37,7 +37,7 @@ final class WebhookEvent
         return new self(
             id: $raw['id'],
             type: $raw['type'],
-            createdAt: $raw['created_at'],
+            created_at: $raw['created_at'],
             data: $data,
         );
     }

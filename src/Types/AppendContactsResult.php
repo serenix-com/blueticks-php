@@ -10,7 +10,7 @@ final class AppendContactsResult
 {
     public function __construct(
         public readonly int $added,
-        public readonly int $contactCount,
+        public readonly int $contact_count,
     ) {
     }
 
@@ -30,7 +30,7 @@ final class AppendContactsResult
 
         return new self(
             added: $raw['added'],
-            contactCount: $raw['contact_count'],
+            contact_count: $raw['contact_count'],
         );
     }
 }

@@ -20,7 +20,7 @@ final class WebhookEventTest extends TestCase
         ]);
         self::assertSame('evt_1', $e->id);
         self::assertSame('message.delivered', $e->type);
-        self::assertSame('2026-04-23T10:00:00Z', $e->createdAt);
+        self::assertSame('2026-04-23T10:00:00Z', $e->created_at);
         self::assertSame(['message_id' => 'msg_1'], $e->data);
     }
 

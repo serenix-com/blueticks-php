@@ -11,6 +11,6 @@ final class VersionTest extends TestCase
 {
     public function testVersionConstantMatchesExpected(): void
     {
-        self::assertSame('3.3.0', Version::BLUETICKS_VERSION);
+        self::assertSame('4.0.0', Version::BLUETICKS_VERSION);
     }
 }

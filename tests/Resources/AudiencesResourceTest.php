@@ -141,7 +141,7 @@ final class AudiencesResourceTest extends TestCase
             ['to' => '+1', 'variables' => ['x' => 'y']],
         ]);
         self::assertSame(1, $r->added);
-        self::assertSame(3, $r->contactCount);
+        self::assertSame(3, $r->contact_count);
 
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());

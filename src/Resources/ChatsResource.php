@@ -5,18 +5,26 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Types\Chat;
+use Blueticks\Types\ChatMedia;
+use Blueticks\Types\ChatMessage;
+use Blueticks\Types\Page;
+use Blueticks\Types\Participant;
 
 /**
  * WhatsApp engine chat operations.
  *
  * Every method is a thin wrapper over a /v1/chats/* endpoint that
- * dispatches to the user's engine. Responses are raw associative
- * arrays; strong DTO wrappers are planned for a future release.
+ * dispatches to the user's engine.
  */
 final class ChatsResource extends BaseResource
 {
-    /** @return array<string, mixed> */
-    public function list(?string $query = null, ?int $limit = null, ?string $cursor = null): array
+    /**
+     * List/search chats, newest first. Cursor-paginated.
+     *
+     * @return Page<Chat>
+     */
+    public function list(?string $query = null, ?int $limit = null, ?string $cursor = null): Page
     {
         $q = [];
         if ($query !== null) {
@@ -28,17 +36,23 @@ final class ChatsResource extends BaseResource
         if ($cursor !== null) {
             $q['cursor'] = $cursor;
         }
-        return $this->client->request('GET', '/v1/chats', $q !== [] ? ['query' => $q] : []);
+        $raw = $this->client->request('GET', '/v1/chats', $q !== [] ? ['query' => $q] : []);
+        return Page::fromArray($raw, fn (array $r): Chat => Chat::fromArray($r));
     }
 
-    /** @return array<string, mixed> */
-    public function get(string $chatId): array
+    /** Retrieve a chat by its JID. */
+    public function get(string $chatId): Chat
     {
-        return $this->client->request('GET', '/v1/chats/' . rawurlencode($chatId));
+        $raw = $this->client->request('GET', '/v1/chats/' . rawurlencode($chatId));
+        return Chat::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function listParticipants(string $chatId, ?int $limit = null, ?string $cursor = null): array
+    /**
+     * List participants in a group chat. Cursor-paginated.
+     *
+     * @return Page<Participant>
+     */
+    public function listParticipants(string $chatId, ?int $limit = null, ?string $cursor = null): Page
     {
         $q = [];
         if ($limit !== null) {
@@ -47,11 +61,12 @@ final class ChatsResource extends BaseResource
         if ($cursor !== null) {
             $q['cursor'] = $cursor;
         }
-        return $this->client->request(
+        $raw = $this->client->request(
             'GET',
             '/v1/chats/' . rawurlencode($chatId) . '/participants',
             $q !== [] ? ['query' => $q] : [],
         );
+        return Page::fromArray($raw, fn (array $r): Participant => Participant::fromArray($r));
     }
 
     /** @return array<string, mixed> */
@@ -67,6 +82,8 @@ final class ChatsResource extends BaseResource
     }
 
     /**
+     * List messages in a chat.
+     *
      * @param array<string, mixed> $opts Accepts:
      *   - mode ('latest'|'history')
      *   - query (free-text search)
@@ -75,9 +92,9 @@ final class ChatsResource extends BaseResource
      *   - message_types: list<string> of allowed message kinds (e.g.
      *     ['document'] for PDFs). When omitted, server-side default-excludes
      *     system events (gp2/revoked/newsletter_notification).
-     * @return array<string, mixed>
+     * @return Page<ChatMessage>
      */
-    public function listMessages(string $chatId, array $opts = []): array
+    public function listMessages(string $chatId, array $opts = []): Page
     {
         $q = ['mode' => $opts['mode'] ?? 'latest'];
         foreach (['query', 'since', 'until', 'limit', 'cursor'] as $k) {
@@ -96,20 +113,22 @@ final class ChatsResource extends BaseResource
         ) {
             $q['message_types'] = implode(',', array_map('strval', $opts['message_types']));
         }
-        return $this->client->request(
+        $raw = $this->client->request(
             'GET',
             '/v1/chats/' . rawurlencode($chatId) . '/messages',
             ['query' => $q],
         );
+        return Page::fromArray($raw, fn (array $r): ChatMessage => ChatMessage::fromArray($r));
     }
 
-    /** @return array<string, mixed> */
-    public function getMessage(string $chatId, string $key): array
+    /** Retrieve a single message by WhatsApp message key. */
+    public function getMessage(string $chatId, string $key): ChatMessage
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'GET',
             '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key),
         );
+        return ChatMessage::fromArray($raw);
     }
 
     /** @return array<string, mixed> */
@@ -140,13 +159,14 @@ final class ChatsResource extends BaseResource
         );
     }
 
-    /** @return array<string, mixed> */
-    public function getMedia(string $chatId, string $key): array
+    /** Download message media (may be returned as base64). */
+    public function getMedia(string $chatId, string $key): ChatMedia
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'GET',
             '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/media',
         );
+        return ChatMedia::fromArray($raw);
     }
 
     /** @return array<string, mixed> */

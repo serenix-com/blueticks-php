@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Blueticks\Types;
 
-use Blueticks\Errors\ValidationError;
-
 final class WebhookCreateResult extends Webhook
 {
     /**
@@ -17,10 +15,10 @@ final class WebhookCreateResult extends Webhook
         array $events,
         ?string $description,
         string $status,
-        string $createdAt,
+        string $created_at,
         public readonly string $secret,
     ) {
-        parent::__construct($id, $url, $events, $description, $status, $createdAt);
+        parent::__construct($id, $url, $events, $description, $status, $created_at);
     }
 
     /**
@@ -45,7 +43,7 @@ final class WebhookCreateResult extends Webhook
             events: $events,
             description: $raw['description'],
             status: $raw['status'],
-            createdAt: $raw['created_at'],
+            created_at: $raw['created_at'],
             secret: $raw['secret'],
         );
     }

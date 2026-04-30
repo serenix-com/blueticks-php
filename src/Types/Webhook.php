@@ -17,7 +17,7 @@ class Webhook
         public readonly array $events,
         public readonly ?string $description,
         public readonly string $status,
-        public readonly string $createdAt,
+        public readonly string $created_at,
     ) {
     }
 
@@ -42,7 +42,7 @@ class Webhook
             events: $events,
             description: $raw['description'],
             status: $raw['status'],
-            createdAt: $raw['created_at'],
+            created_at: $raw['created_at'],
         );
     }
 

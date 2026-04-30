@@ -17,7 +17,7 @@ final class AppendContactsResultTest extends TestCase
             'contact_count' => 42,
         ]);
         self::assertSame(5, $r->added);
-        self::assertSame(42, $r->contactCount);
+        self::assertSame(42, $r->contact_count);
     }
 
     public function testMissingFieldThrows(): void

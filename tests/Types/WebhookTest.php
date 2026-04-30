@@ -32,7 +32,7 @@ final class WebhookTest extends TestCase
         self::assertSame(['message.delivered', 'message.failed'], $w->events);
         self::assertSame('primary', $w->description);
         self::assertSame('enabled', $w->status);
-        self::assertSame('2026-04-23T10:00:00Z', $w->createdAt);
+        self::assertSame('2026-04-23T10:00:00Z', $w->created_at);
     }
 
     public function testNullableDescription(): void

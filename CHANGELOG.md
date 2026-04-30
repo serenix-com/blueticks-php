@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.0.0 — 2026-04-30
+
+### BREAKING
+- `Blueticks\Resources\ChatsResource` methods now return typed DTOs instead of
+  raw `array<string, mixed>`:
+  - `list()` → `Page<Chat>`
+  - `get()` → `Chat`
+  - `listParticipants()` → `Page<Participant>`
+  - `listMessages()` → `Page<ChatMessage>`
+  - `getMessage()` → `ChatMessage`
+  - `getMedia()` → `ChatMedia`
+  Methods without DTOs (`markRead`, `open`, `react`, `loadOlderMessages`,
+  `getMessageAck`, `getMediaUrl`, `batchMessageAcks`) continue to return raw
+  associative arrays.
+- DTO property names migrated camelCase → snake_case across `Audience`,
+  `Webhook`, `WebhookCreateResult`, `WebhookEvent`, `Contact`, `Campaign`,
+  `Message`, and `AppendContactsResult` to match the wire format and the
+  precedent set by `Account` / the chat DTOs. Example:
+  `$audience->createdAt` → `$audience->created_at`;
+  `$message->mediaUrl` → `$message->media_url`;
+  `$campaign->audienceId` → `$campaign->audience_id`.
+
+### Added
+- None beyond what is covered in BREAKING.
+
 ## 3.3.0 — 2026-04-30
 
 ### Added

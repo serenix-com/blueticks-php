@@ -21,7 +21,7 @@ final class ContactTest extends TestCase
         self::assertSame('ct_1', $c->id);
         self::assertSame('+15551234567', $c->to);
         self::assertSame(['name' => 'Alice', 'plan' => 'pro'], $c->variables);
-        self::assertSame('2026-04-23T10:00:00Z', $c->addedAt);
+        self::assertSame('2026-04-23T10:00:00Z', $c->added_at);
     }
 
     public function testNonStringVariableValueThrows(): void

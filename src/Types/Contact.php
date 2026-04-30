@@ -15,7 +15,7 @@ final class Contact
         public readonly string $id,
         public readonly string $to,
         public readonly array $variables,
-        public readonly string $addedAt,
+        public readonly string $added_at,
     ) {
     }
 
@@ -42,7 +42,7 @@ final class Contact
             id: $raw['id'],
             to: $raw['to'],
             variables: $variables,
-            addedAt: $raw['added_at'],
+            added_at: $raw['added_at'],
         );
     }
 

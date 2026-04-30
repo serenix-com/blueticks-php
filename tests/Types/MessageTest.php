@@ -37,17 +37,17 @@ final class MessageTest extends TestCase
         self::assertSame('+15551234567', $m->to);
         self::assertNull($m->from);
         self::assertSame('hello', $m->text);
-        self::assertNull($m->mediaUrl);
+        self::assertNull($m->media_url);
         self::assertSame('queued', $m->status);
-        self::assertSame('2026-04-23T10:00:00Z', $m->createdAt);
-        self::assertNull($m->sentAt);
-        self::assertNull($m->deliveredAt);
-        self::assertNull($m->readAt);
-        self::assertNull($m->failedAt);
-        self::assertNull($m->failureReason);
+        self::assertSame('2026-04-23T10:00:00Z', $m->created_at);
+        self::assertNull($m->sent_at);
+        self::assertNull($m->delivered_at);
+        self::assertNull($m->read_at);
+        self::assertNull($m->failed_at);
+        self::assertNull($m->failure_reason);
     }
 
-    public function testMapsSnakeCaseToCamelCase(): void
+    public function testPopulatesAllOptionalFields(): void
     {
         $f = self::fixture();
         $f['media_url'] = 'https://cdn.example.com/x.jpg';
@@ -58,13 +58,13 @@ final class MessageTest extends TestCase
         $f['failed_at'] = '2026-04-23T10:00:04Z';
         $f['failure_reason'] = 'blocked';
         $m = Message::fromArray($f);
-        self::assertSame('https://cdn.example.com/x.jpg', $m->mediaUrl);
-        self::assertSame('2026-04-24T09:00:00Z', $m->sendAt);
-        self::assertSame('2026-04-23T10:00:01Z', $m->sentAt);
-        self::assertSame('2026-04-23T10:00:02Z', $m->deliveredAt);
-        self::assertSame('2026-04-23T10:00:03Z', $m->readAt);
-        self::assertSame('2026-04-23T10:00:04Z', $m->failedAt);
-        self::assertSame('blocked', $m->failureReason);
+        self::assertSame('https://cdn.example.com/x.jpg', $m->media_url);
+        self::assertSame('2026-04-24T09:00:00Z', $m->send_at);
+        self::assertSame('2026-04-23T10:00:01Z', $m->sent_at);
+        self::assertSame('2026-04-23T10:00:02Z', $m->delivered_at);
+        self::assertSame('2026-04-23T10:00:03Z', $m->read_at);
+        self::assertSame('2026-04-23T10:00:04Z', $m->failed_at);
+        self::assertSame('blocked', $m->failure_reason);
     }
 
     public function testFromArrayRequiresId(): void
