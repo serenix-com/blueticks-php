@@ -77,6 +77,6 @@ final class MockTransport
     /** @return list<RequestInterface> */
     public function requests(): array
     {
-        return $this->client->getRequests();
+        return array_values($this->client->getRequests());
     }
 }
