@@ -6,5 +6,5 @@ namespace Blueticks;
 
 final class Version
 {
-    public const BLUETICKS_VERSION = '3.1.0';
+    public const BLUETICKS_VERSION = '3.2.0';
 }

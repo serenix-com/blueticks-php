@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 3.2.0 — 2026-04-30
+
+### Note
+- `$client->chats->getMedia()` response now carries two extra fields
+  from the underlying API:
+  - `original_quality`: `bool|null` — false when WA returned a preview
+    JPEG instead of the original sender uploaded (#113 — only affects
+    own-sent newsletter media). null/absent on the genuine original.
+  - `media_unavailable`: `?string` — reason bytes couldn't be retrieved
+    (`expired`, `fetching`, `error`, `no_media`).
+- The chat resources still return raw associative arrays (no DTOs yet),
+  so the new fields flow through transparently. Typed DTOs are planned
+  for a later release.
+
 ## 3.1.0 — 2026-04-29
 
 ### Added
