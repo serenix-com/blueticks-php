@@ -77,8 +77,8 @@ final class WebhooksResourceTest extends TestCase
         $page = $this->client($mock)->webhooks->list();
         self::assertCount(2, $page->data);
         self::assertInstanceOf(Webhook::class, $page->data[0]);
-        self::assertFalse($page->hasMore);
-        self::assertNull($page->nextCursor);
+        self::assertFalse($page->has_more);
+        self::assertNull($page->next_cursor);
 
         $req = $mock->requests()[0];
         self::assertSame('GET', $req->getMethod());

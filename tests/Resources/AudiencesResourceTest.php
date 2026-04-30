@@ -79,7 +79,7 @@ final class AudiencesResourceTest extends TestCase
 
         $page = $this->client($mock)->audiences->list();
         self::assertCount(1, $page->data);
-        self::assertFalse($page->hasMore);
+        self::assertFalse($page->has_more);
     }
 
     public function testGetWithPage(): void

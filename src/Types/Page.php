@@ -9,9 +9,9 @@ use Blueticks\Errors\ValidationError;
 /**
  * Cursor-paginated list envelope returned by every v1 list endpoint.
  *
- * Iterate `data` for the current page; pass `nextCursor` back as the
+ * Iterate `data` for the current page; pass `next_cursor` back as the
  * `cursor` argument of the next `list()` call to continue. When
- * `hasMore` is false, `nextCursor` is null and iteration is complete.
+ * `has_more` is false, `next_cursor` is null and iteration is complete.
  *
  * @template T of object
  */
@@ -22,8 +22,8 @@ final class Page
      */
     public function __construct(
         public readonly array $data,
-        public readonly bool $hasMore,
-        public readonly ?string $nextCursor,
+        public readonly bool $has_more,
+        public readonly ?string $next_cursor,
     ) {
     }
 

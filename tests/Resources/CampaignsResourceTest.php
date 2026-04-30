@@ -80,7 +80,7 @@ final class CampaignsResourceTest extends TestCase
 
         $page = $this->client($mock)->campaigns->list();
         self::assertCount(1, $page->data);
-        self::assertFalse($page->hasMore);
+        self::assertFalse($page->has_more);
     }
 
     public function testGet(): void

@@ -93,7 +93,7 @@ final class ChatsResourceTest extends TestCase
         self::assertCount(1, $page->data);
         self::assertInstanceOf(Chat::class, $page->data[0]);
         self::assertSame('Alice', $page->data[0]->name);
-        self::assertFalse($page->hasMore);
+        self::assertFalse($page->has_more);
 
         $req = $mock->requests()[0];
         self::assertSame('GET', $req->getMethod());
@@ -172,8 +172,8 @@ final class ChatsResourceTest extends TestCase
         self::assertCount(1, $page->data);
         self::assertInstanceOf(ChatMessage::class, $page->data[0]);
         self::assertSame('hello world', $page->data[0]->text);
-        self::assertTrue($page->hasMore);
-        self::assertSame('cur_123', $page->nextCursor);
+        self::assertTrue($page->has_more);
+        self::assertSame('cur_123', $page->next_cursor);
     }
 
     public function testGetMessageReturnsChatMessage(): void
