@@ -8,7 +8,7 @@ use Blueticks\Errors\ValidationError;
 
 final class ChatMedia
 {
-    public const MEDIA_UNAVAILABLE_REASONS = ['expired', 'fetching', 'error', 'no_media'];
+    public const MEDIA_UNAVAILABLE_REASONS = ['expired', 'fetching', 'awaiting_sender', 'error', 'no_media'];
 
     public function __construct(
         public readonly ?string $url,

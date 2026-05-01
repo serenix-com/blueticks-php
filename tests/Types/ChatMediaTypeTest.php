@@ -53,6 +53,19 @@ final class ChatMediaTypeTest extends TestCase
         self::assertSame('expired', $m->media_unavailable);
     }
 
+    public function testMediaUnavailableAwaitingSender(): void
+    {
+        $m = ChatMedia::fromArray([
+            'url' => null,
+            'mimetype' => null,
+            'filename' => null,
+            'data_base64' => null,
+            'original_quality' => null,
+            'media_unavailable' => 'awaiting_sender',
+        ]);
+        self::assertSame('awaiting_sender', $m->media_unavailable);
+    }
+
     public function testInvalidMediaUnavailableEnumThrows(): void
     {
         $this->expectException(ValidationError::class);
