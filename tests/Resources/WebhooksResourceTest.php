@@ -6,6 +6,7 @@ namespace Blueticks\Tests\Resources;
 
 use Blueticks\Blueticks;
 use Blueticks\Tests\Helpers\MockTransport;
+use Blueticks\Types\DeletedResource;
 use Blueticks\Types\Webhook;
 use Blueticks\Types\WebhookCreateResult;
 use PHPUnit\Framework\TestCase;
@@ -119,9 +120,12 @@ final class WebhooksResourceTest extends TestCase
     public function testDelete(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, []);
+        $mock->enqueueJson(200, ['id' => 'wh_1', 'deleted' => true]);
 
-        $this->client($mock)->webhooks->delete('wh_1');
+        $r = $this->client($mock)->webhooks->delete('wh_1');
+        self::assertInstanceOf(DeletedResource::class, $r);
+        self::assertSame('wh_1', $r->id);
+        self::assertTrue($r->deleted);
 
         $req = $mock->requests()[0];
         self::assertSame('DELETE', $req->getMethod());

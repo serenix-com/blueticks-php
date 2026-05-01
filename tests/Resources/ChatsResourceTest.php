@@ -309,6 +309,10 @@ final class ChatsResourceTest extends TestCase
 
         self::assertInstanceOf(BatchMessageAcksResponse::class, $r);
         self::assertCount(2, $r->data);
+        self::assertSame('true_1234@c.us_ABC', $r->data[0]->key);
+        self::assertSame(3, $r->data[0]->ack);
+        self::assertSame('true_1234@c.us_DEF', $r->data[1]->key);
+        self::assertSame(1, $r->data[1]->ack);
 
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());

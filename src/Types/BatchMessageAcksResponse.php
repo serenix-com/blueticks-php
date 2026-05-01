@@ -8,15 +8,13 @@ use Blueticks\Errors\ValidationError;
 
 /**
  * Response payload for `POST /v1/chats/message_acks`. The server
- * returns one row per requested message_key. Row shape is engine-
- * defined and intentionally untyped here ({@see additionalProperties}
- * in the OpenAPI spec) — callers read fields like `key`, `ack`,
- * `read_at` directly off the associative arrays.
+ * returns one {@see BatchMessageAckEntry} row per requested message
+ * key; rows whose engine state is unknown carry `ack: null`.
  */
 final class BatchMessageAcksResponse
 {
     /**
-     * @param list<array<string, mixed>> $data
+     * @param list<BatchMessageAckEntry> $data
      */
     public function __construct(
         public readonly array $data,
@@ -42,7 +40,7 @@ final class BatchMessageAcksResponse
                 );
             }
             /** @var array<string, mixed> $row */
-            $rows[] = $row;
+            $rows[] = BatchMessageAckEntry::fromArray($row);
         }
 
         return new self(data: $rows);

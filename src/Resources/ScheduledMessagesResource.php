@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Types\DeletedResource;
 use Blueticks\Types\Page;
 use Blueticks\Types\ScheduledMessage;
 
@@ -77,11 +78,12 @@ final class ScheduledMessagesResource extends BaseResource
     /**
      * Cancel scheduled message.
      *
-     * Removes the scheduled-message resource with the given id.
+     * Cancel a queued scheduled message before it fires. Soft-deletes the
+     * row (still queryable in audit logs). Returns the deleted ref.
      */
-    public function delete(string $id): ScheduledMessage
+    public function delete(string $id): DeletedResource
     {
         $raw = $this->client->request('DELETE', '/v1/scheduled-messages/' . rawurlencode($id));
-        return ScheduledMessage::fromArray($raw);
+        return DeletedResource::fromArray($raw);
     }
 }

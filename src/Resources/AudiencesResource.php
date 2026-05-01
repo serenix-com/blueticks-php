@@ -8,6 +8,7 @@ use Blueticks\BaseResource;
 use Blueticks\Types\AppendContactsResult;
 use Blueticks\Types\Audience;
 use Blueticks\Types\Contact;
+use Blueticks\Types\DeletedResource;
 use Blueticks\Types\Page;
 
 final class AudiencesResource extends BaseResource
@@ -64,9 +65,10 @@ final class AudiencesResource extends BaseResource
         return Audience::fromArray($raw);
     }
 
-    public function delete(string $id): void
+    public function delete(string $id): DeletedResource
     {
-        $this->client->request('DELETE', "/v1/audiences/{$id}");
+        $raw = $this->client->request('DELETE', "/v1/audiences/{$id}");
+        return DeletedResource::fromArray($raw);
     }
 
     /**

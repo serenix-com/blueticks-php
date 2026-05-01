@@ -8,6 +8,7 @@ use Blueticks\Blueticks;
 use Blueticks\Tests\Helpers\MockTransport;
 use Blueticks\Types\Audience;
 use Blueticks\Types\Contact;
+use Blueticks\Types\DeletedResource;
 use PHPUnit\Framework\TestCase;
 
 final class AudiencesResourceTest extends TestCase
@@ -125,9 +126,13 @@ final class AudiencesResourceTest extends TestCase
     public function testDelete(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, []);
+        $mock->enqueueJson(200, ['id' => 'aud_1', 'deleted' => true]);
 
-        $this->client($mock)->audiences->delete('aud_1');
+        $r = $this->client($mock)->audiences->delete('aud_1');
+        self::assertInstanceOf(DeletedResource::class, $r);
+        self::assertSame('aud_1', $r->id);
+        self::assertTrue($r->deleted);
+
         $req = $mock->requests()[0];
         self::assertSame('DELETE', $req->getMethod());
     }

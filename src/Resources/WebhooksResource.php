@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Types\DeletedResource;
 use Blueticks\Types\Page;
 use Blueticks\Types\Webhook;
 use Blueticks\Types\WebhookCreateResult;
@@ -68,9 +69,10 @@ final class WebhooksResource extends BaseResource
         return Webhook::fromArray($raw);
     }
 
-    public function delete(string $id): void
+    public function delete(string $id): DeletedResource
     {
-        $this->client->request('DELETE', "/v1/webhooks/{$id}");
+        $raw = $this->client->request('DELETE', "/v1/webhooks/{$id}");
+        return DeletedResource::fromArray($raw);
     }
 
     public function rotateSecret(string $id): WebhookCreateResult

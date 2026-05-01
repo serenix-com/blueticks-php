@@ -7,6 +7,7 @@ namespace Blueticks\Tests\Resources;
 use Blueticks\Blueticks;
 use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
+use Blueticks\Types\DeletedResource;
 use Blueticks\Types\ScheduledMessage;
 use PHPUnit\Framework\TestCase;
 
@@ -175,10 +176,12 @@ final class ScheduledMessagesResourceTest extends TestCase
     public function testDelete(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, self::fixture());
+        $mock->enqueueJson(200, ['id' => 'sched_1', 'deleted' => true]);
 
-        $sm = $this->client($mock)->scheduled_messages->delete('sched_1');
-        self::assertInstanceOf(ScheduledMessage::class, $sm);
+        $r = $this->client($mock)->scheduled_messages->delete('sched_1');
+        self::assertInstanceOf(DeletedResource::class, $r);
+        self::assertSame('sched_1', $r->id);
+        self::assertTrue($r->deleted);
 
         $req = $mock->requests()[0];
         self::assertSame('DELETE', $req->getMethod());
