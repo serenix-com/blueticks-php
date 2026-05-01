@@ -5,33 +5,47 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Types\Group;
 
+/**
+ * WhatsApp group operations.
+ *
+ * Each method maps to a /v1/groups/* endpoint and returns the
+ * authoritative {@see Group} snapshot the engine produced (or void
+ * for `leave`, which is fire-and-forget — 204 with no body).
+ */
 final class GroupsResource extends BaseResource
 {
     /**
-     * @param list<string> $participants
-     * @return array<string, mixed>
+     * Create a new group with the given name and initial participants.
+     *
+     * @param list<string> $participants Each entry is a chat id (e.g. `1234@c.us`).
      */
-    public function create(string $name, array $participants): array
+    public function create(string $name, array $participants): Group
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'POST',
             '/v1/groups',
             ['body' => ['name' => $name, 'participants' => $participants]],
         );
+        return Group::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function get(string $groupId): array
+    /** Retrieve a group by id. */
+    public function get(string $groupId): Group
     {
-        return $this->client->request('GET', '/v1/groups/' . rawurlencode($groupId));
+        $raw = $this->client->request('GET', '/v1/groups/' . rawurlencode($groupId));
+        return Group::fromArray($raw);
     }
 
     /**
-     * @param array<string, mixed> $opts Accepts: name, settings (array<string, bool>)
-     * @return array<string, mixed>
+     * Update group metadata. Pass any subset of name and settings.
+     *
+     * @param array<string, mixed> $opts Accepts:
+     *   - name: string
+     *   - settings: array{announce?: bool, restrict?: bool}
      */
-    public function update(string $groupId, array $opts): array
+    public function update(string $groupId, array $opts): Group
     {
         $body = [];
         if (isset($opts['name'])) {
@@ -40,55 +54,64 @@ final class GroupsResource extends BaseResource
         if (isset($opts['settings'])) {
             $body['settings'] = $opts['settings'];
         }
-        return $this->client->request(
+        $raw = $this->client->request(
             'PATCH',
             '/v1/groups/' . rawurlencode($groupId),
             ['body' => $body],
         );
+        return Group::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function addMember(string $groupId, string $chatId): array
+    /** Add a member to the group. */
+    public function addMember(string $groupId, string $chatId): Group
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'POST',
             '/v1/groups/' . rawurlencode($groupId) . '/members',
             ['body' => ['chat_id' => $chatId]],
         );
+        return Group::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function removeMember(string $groupId, string $chatId): array
+    /** Remove a member from the group. */
+    public function removeMember(string $groupId, string $chatId): Group
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'DELETE',
             '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId),
         );
+        return Group::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function promoteAdmin(string $groupId, string $chatId): array
+    /** Promote a member to admin. */
+    public function promoteAdmin(string $groupId, string $chatId): Group
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'POST',
             '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId) . '/admin',
         );
+        return Group::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function demoteAdmin(string $groupId, string $chatId): array
+    /** Demote an admin back to a regular member. */
+    public function demoteAdmin(string $groupId, string $chatId): Group
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'DELETE',
             '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId) . '/admin',
         );
+        return Group::fromArray($raw);
     }
 
     /**
-     * @param array<string, mixed> $opts Accepts: file_data_url (required), file_name, file_mime_type
-     * @return array<string, mixed>
+     * Replace the group's profile picture.
+     *
+     * @param array<string, mixed> $opts Accepts:
+     *   - file_data_url: string (required) — base64 data URL, PNG/JPEG, ≤20 MiB
+     *   - file_name: string
+     *   - file_mime_type: string
      */
-    public function setPicture(string $groupId, array $opts): array
+    public function setPicture(string $groupId, array $opts): Group
     {
         $body = [];
         foreach (['file_data_url', 'file_name', 'file_mime_type'] as $k) {
@@ -96,17 +119,21 @@ final class GroupsResource extends BaseResource
                 $body[$k] = $opts[$k];
             }
         }
-        return $this->client->request(
+        $raw = $this->client->request(
             'PUT',
             '/v1/groups/' . rawurlencode($groupId) . '/picture',
             ['body' => $body],
         );
+        return Group::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function leave(string $groupId): array
+    /**
+     * Leave the group as the authenticated identity. Idempotent —
+     * succeeds even if already not a member. Returns no payload.
+     */
+    public function leave(string $groupId): void
     {
-        return $this->client->request(
+        $this->client->request(
             'DELETE',
             '/v1/groups/' . rawurlencode($groupId) . '/members/me',
         );

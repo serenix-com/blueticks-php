@@ -5,9 +5,15 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Types\BatchMessageAcksResponse;
 use Blueticks\Types\Chat;
 use Blueticks\Types\ChatMedia;
 use Blueticks\Types\ChatMessage;
+use Blueticks\Types\ChatRef;
+use Blueticks\Types\LoadOlderMessagesResponse;
+use Blueticks\Types\MediaUrlResponse;
+use Blueticks\Types\MessageAck;
+use Blueticks\Types\OkResponse;
 use Blueticks\Types\Page;
 use Blueticks\Types\Participant;
 
@@ -69,16 +75,18 @@ final class ChatsResource extends BaseResource
         return Page::fromArray($raw, fn (array $r): Participant => Participant::fromArray($r));
     }
 
-    /** @return array<string, mixed> */
-    public function markRead(string $chatId): array
+    /** Mark a chat as read. */
+    public function markRead(string $chatId): OkResponse
     {
-        return $this->client->request('POST', '/v1/chats/' . rawurlencode($chatId) . '/mark_read');
+        $raw = $this->client->request('POST', '/v1/chats/' . rawurlencode($chatId) . '/mark_read');
+        return OkResponse::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function open(string $chatId): array
+    /** Open a chat in the engine and return a reference to it. */
+    public function open(string $chatId): ChatRef
     {
-        return $this->client->request('POST', '/v1/chats/' . rawurlencode($chatId) . '/open');
+        $raw = $this->client->request('POST', '/v1/chats/' . rawurlencode($chatId) . '/open');
+        return ChatRef::fromArray($raw);
     }
 
     /**
@@ -131,32 +139,35 @@ final class ChatsResource extends BaseResource
         return ChatMessage::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function getMessageAck(string $chatId, string $key): array
+    /** Retrieve a single message's delivery status. */
+    public function getMessageAck(string $chatId, string $key): MessageAck
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'GET',
             '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/ack',
         );
+        return MessageAck::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function react(string $chatId, string $key, string $emoji): array
+    /** React to a message with an emoji. Empty string clears any reaction. */
+    public function react(string $chatId, string $key, string $emoji): OkResponse
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'POST',
             '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/reactions',
             ['body' => ['emoji' => $emoji]],
         );
+        return OkResponse::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function loadOlderMessages(string $chatId): array
+    /** Ask the engine to load older messages from the phone for this chat. */
+    public function loadOlderMessages(string $chatId): LoadOlderMessagesResponse
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'POST',
             '/v1/chats/' . rawurlencode($chatId) . '/messages/load_older',
         );
+        return LoadOlderMessagesResponse::fromArray($raw);
     }
 
     /** Download message media (may be returned as base64). */
@@ -169,25 +180,28 @@ final class ChatsResource extends BaseResource
         return ChatMedia::fromArray($raw);
     }
 
-    /** @return array<string, mixed> */
-    public function getMediaUrl(string $chatId, string $key): array
+    /** Get a hosted URL for the media bytes of a message. */
+    public function getMediaUrl(string $chatId, string $key): MediaUrlResponse
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'GET',
             '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/media_url',
         );
+        return MediaUrlResponse::fromArray($raw);
     }
 
     /**
+     * Look up delivery acks for many messages at once.
+     *
      * @param list<string> $messageKeys
-     * @return array<string, mixed>
      */
-    public function batchMessageAcks(array $messageKeys): array
+    public function batchMessageAcks(array $messageKeys): BatchMessageAcksResponse
     {
-        return $this->client->request(
+        $raw = $this->client->request(
             'POST',
             '/v1/chats/message_acks',
             ['body' => ['message_keys' => $messageKeys]],
         );
+        return BatchMessageAcksResponse::fromArray($raw);
     }
 }

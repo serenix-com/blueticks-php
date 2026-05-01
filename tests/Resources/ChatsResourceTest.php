@@ -7,9 +7,15 @@ namespace Blueticks\Tests\Resources;
 use Blueticks\Blueticks;
 use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
+use Blueticks\Types\BatchMessageAcksResponse;
 use Blueticks\Types\Chat;
 use Blueticks\Types\ChatMedia;
 use Blueticks\Types\ChatMessage;
+use Blueticks\Types\ChatRef;
+use Blueticks\Types\LoadOlderMessagesResponse;
+use Blueticks\Types\MediaUrlResponse;
+use Blueticks\Types\MessageAck;
+use Blueticks\Types\OkResponse;
 use Blueticks\Types\Page;
 use Blueticks\Types\Participant;
 use PHPUnit\Framework\TestCase;
@@ -198,5 +204,123 @@ final class ChatsResourceTest extends TestCase
         self::assertInstanceOf(ChatMedia::class, $media);
         self::assertSame('image/jpeg', $media->mimetype);
         self::assertSame('x.jpg', $media->filename);
+    }
+
+    public function testMarkReadReturnsOkResponse(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $r = $this->client($mock)->chats->markRead('1234@c.us');
+
+        self::assertInstanceOf(OkResponse::class, $r);
+        self::assertTrue($r->ok);
+
+        $req = $mock->requests()[0];
+        self::assertSame('POST', $req->getMethod());
+        self::assertSame(
+            'https://api.blueticks.test/v1/chats/1234%40c.us/mark_read',
+            (string) $req->getUri(),
+        );
+    }
+
+    public function testOpenReturnsChatRef(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['chat_id' => '1234@c.us']);
+
+        $ref = $this->client($mock)->chats->open('1234@c.us');
+
+        self::assertInstanceOf(ChatRef::class, $ref);
+        self::assertSame('1234@c.us', $ref->chat_id);
+
+        $req = $mock->requests()[0];
+        self::assertSame('POST', $req->getMethod());
+    }
+
+    public function testGetMessageAckReturnsMessageAck(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['ack' => 3]);
+
+        $a = $this->client($mock)->chats->getMessageAck('1234@c.us', 'true_1234@c.us_ABCDEF');
+
+        self::assertInstanceOf(MessageAck::class, $a);
+        self::assertSame(3, $a->ack);
+    }
+
+    public function testReactReturnsOkResponseAndPostsEmoji(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $r = $this->client($mock)->chats->react('1234@c.us', 'true_1234@c.us_ABCDEF', "\u{1F44D}");
+
+        self::assertInstanceOf(OkResponse::class, $r);
+
+        $req = $mock->requests()[0];
+        self::assertSame('POST', $req->getMethod());
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(["\u{1F44D}"], [$body['emoji']]);
+    }
+
+    public function testLoadOlderMessagesReturnsResponse(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, [
+            'total_messages' => 1200,
+            'added' => 50,
+            'can_load_more' => true,
+        ]);
+
+        $r = $this->client($mock)->chats->loadOlderMessages('1234@c.us');
+
+        self::assertInstanceOf(LoadOlderMessagesResponse::class, $r);
+        self::assertSame(50, $r->added);
+        self::assertTrue($r->can_load_more);
+    }
+
+    public function testGetMediaUrlReturnsMediaUrlResponse(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['url' => 'https://cdn.example.com/x.jpg']);
+
+        $r = $this->client($mock)->chats->getMediaUrl('1234@c.us', 'true_1234@c.us_ABCDEF');
+
+        self::assertInstanceOf(MediaUrlResponse::class, $r);
+        self::assertSame('https://cdn.example.com/x.jpg', $r->url);
+    }
+
+    public function testBatchMessageAcksPostsKeysAndReturnsRows(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, [
+            'data' => [
+                ['key' => 'true_1234@c.us_ABC', 'ack' => 3],
+                ['key' => 'true_1234@c.us_DEF', 'ack' => 1],
+            ],
+        ]);
+
+        $r = $this->client($mock)->chats->batchMessageAcks([
+            'true_1234@c.us_ABC',
+            'true_1234@c.us_DEF',
+        ]);
+
+        self::assertInstanceOf(BatchMessageAcksResponse::class, $r);
+        self::assertCount(2, $r->data);
+
+        $req = $mock->requests()[0];
+        self::assertSame('POST', $req->getMethod());
+        self::assertSame(
+            'https://api.blueticks.test/v1/chats/message_acks',
+            (string) $req->getUri(),
+        );
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(
+            ['true_1234@c.us_ABC', 'true_1234@c.us_DEF'],
+            $body['message_keys'],
+        );
     }
 }
