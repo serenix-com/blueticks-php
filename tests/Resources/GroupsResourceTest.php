@@ -8,6 +8,7 @@ use Blueticks\Blueticks;
 use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
 use Blueticks\Types\Group;
+use Blueticks\Types\Page;
 use PHPUnit\Framework\TestCase;
 
 final class GroupsResourceTest extends TestCase
@@ -63,6 +64,46 @@ final class GroupsResourceTest extends TestCase
         ];
     }
 
+    public function testList(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, [
+            'data'        => [self::groupFixture()],
+            'has_more'    => false,
+            'next_cursor' => null,
+        ]);
+
+        $page = $this->client($mock)->groups->list();
+        self::assertInstanceOf(Page::class, $page);
+        self::assertCount(1, $page->data);
+        self::assertInstanceOf(Group::class, $page->data[0]);
+
+        $req = $mock->requests()[0];
+        self::assertSame('GET', $req->getMethod());
+        self::assertSame('https://api.blueticks.test/v1/groups', (string) $req->getUri());
+    }
+
+    public function testList401MapsToAuthenticationError(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, [
+            'error' => [
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
+                'request_id' => 'req_x',
+            ],
+        ]);
+
+        try {
+            $this->client($mock)->groups->list();
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('authentication_required', $e->code);
+            self::assertSame('req_x', $e->requestId);
+        }
+    }
+
     public function testCreate(): void
     {
         $mock = new MockTransport();
@@ -85,19 +126,19 @@ final class GroupsResourceTest extends TestCase
         self::assertSame(['1234567890@c.us', '5550000001@c.us'], $body['participants']);
     }
 
-    public function testGet401MapsToAuthenticationError(): void
+    public function testRetrieve401MapsToAuthenticationError(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(401, [
             'error' => [
-                'code' => 'authentication_required',
-                'message' => 'bad key',
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
                 'request_id' => 'req_x',
             ],
         ]);
 
         try {
-            $this->client($mock)->groups->get('1234567890-9876543210@g.us');
+            $this->client($mock)->groups->retrieve('1234567890-9876543210@g.us');
             self::fail('Expected AuthenticationError');
         } catch (AuthenticationError $e) {
             self::assertSame(401, $e->statusCode);
@@ -106,12 +147,12 @@ final class GroupsResourceTest extends TestCase
         }
     }
 
-    public function testGet(): void
+    public function testRetrieve(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::groupFixture());
 
-        $g = $this->client($mock)->groups->get('1234567890-9876543210@g.us');
+        $g = $this->client($mock)->groups->retrieve('1234567890-9876543210@g.us');
         self::assertInstanceOf(Group::class, $g);
         self::assertSame(3, $g->participant_count);
     }

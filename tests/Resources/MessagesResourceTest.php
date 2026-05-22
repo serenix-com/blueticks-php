@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Blueticks\Tests\Resources;
 
 use Blueticks\Blueticks;
+use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
 use Blueticks\Types\Message;
 use PHPUnit\Framework\TestCase;
@@ -30,62 +31,125 @@ final class MessagesResourceTest extends TestCase
     private static function messageFixture(): array
     {
         return [
-            'id' => 'msg_1',
-            'to' => '+15551234567',
-            'from' => null,
-            'text' => 'hello',
-            'media_url' => null,
-            'status' => 'queued',
-            'send_at' => null,
-            'created_at' => '2026-04-23T10:00:00Z',
-            'sent_at' => null,
-            'delivered_at' => null,
-            'read_at' => null,
-            'failed_at' => null,
+            'id'             => 'msg_1',
+            'key'            => null,
+            'to'             => '+15551234567',
+            'from'           => null,
+            'type'           => 'text',
+            'text'           => 'hello',
+            'media_url'      => null,
+            'media_kind'     => null,
+            'poll_question'  => null,
+            'status'         => 'queued',
+            'send_at'        => null,
+            'created_at'     => '2026-04-23T10:00:00Z',
+            'sent_at'        => null,
+            'delivered_at'   => null,
+            'read_at'        => null,
+            'failed_at'      => null,
             'failure_reason' => null,
         ];
     }
 
-    public function testSendBasic(): void
+    public function testSendText(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, self::messageFixture());
+        $mock->enqueueJson(201, self::messageFixture());
 
-        $msg = $this->client($mock)->messages->send('+15551234567', ['text' => 'hello']);
+        $msg = $this->client($mock)->messages->send([
+            'type' => 'text',
+            'to'   => '+15551234567',
+            'text' => 'hello',
+        ]);
 
         self::assertInstanceOf(Message::class, $msg);
         self::assertSame('msg_1', $msg->id);
+        self::assertSame('text', $msg->type);
 
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());
         self::assertSame('https://api.blueticks.test/v1/messages', (string) $req->getUri());
-        $body = (string) $req->getBody();
         /** @var array<string, mixed> $decoded */
-        $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame(['to' => '+15551234567', 'text' => 'hello'], $decoded);
+        $decoded = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('text', $decoded['type']);
+        self::assertSame('+15551234567', $decoded['to']);
+        self::assertSame('hello', $decoded['text']);
     }
 
-    public function testSendWithAllOptions(): void
+    public function testSend401MapsToAuthenticationError(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, self::messageFixture());
-
-        $this->client($mock)->messages->send('+15551234567', [
-            'text' => 'hi',
-            'media_url' => 'https://cdn.example.com/x.jpg',
-            'media_caption' => 'pic',
-            'send_at' => '2026-04-24T09:00:00Z',
-            'from' => 'sess_1',
+        $mock->enqueueJson(401, [
+            'error' => [
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
+                'request_id' => 'req_x',
+            ],
         ]);
 
-        $body = (string) $mock->requests()[0]->getBody();
-        /** @var array<string, mixed> $decoded */
-        $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('hi', $decoded['text']);
-        self::assertSame('https://cdn.example.com/x.jpg', $decoded['media_url']);
-        self::assertSame('pic', $decoded['media_caption']);
-        self::assertSame('2026-04-24T09:00:00Z', $decoded['send_at']);
-        self::assertSame('sess_1', $decoded['from']);
+        try {
+            $this->client($mock)->messages->send([
+                'type' => 'text',
+                'to'   => '+15551234567',
+                'text' => 'hello',
+            ]);
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('authentication_required', $e->code);
+            self::assertSame('req_x', $e->requestId);
+        }
+    }
+
+    public function testSendMedia(): void
+    {
+        $fixture = self::messageFixture();
+        $fixture['type'] = 'media';
+        $fixture['media_url'] = 'https://cdn.example.com/receipt.pdf';
+        $fixture['media_kind'] = 'document';
+        $mock = new MockTransport();
+        $mock->enqueueJson(201, $fixture);
+
+        $msg = $this->client($mock)->messages->send([
+            'type'  => 'media',
+            'to'    => '+15551234567',
+            'media' => [
+                'url'      => 'https://cdn.example.com/receipt.pdf',
+                'kind'     => 'document',
+                'filename' => 'receipt.pdf',
+            ],
+        ]);
+
+        self::assertInstanceOf(Message::class, $msg);
+        self::assertSame('media', $msg->type);
+        self::assertSame('https://cdn.example.com/receipt.pdf', $msg->media_url);
+
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $mock->requests()[0]->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('media', $body['type']);
+        self::assertSame('https://cdn.example.com/receipt.pdf', $body['media']['url']);
+    }
+
+    public function testSendPoll(): void
+    {
+        $fixture = self::messageFixture();
+        $fixture['type'] = 'poll';
+        $fixture['poll_question'] = 'Pizza?';
+        $mock = new MockTransport();
+        $mock->enqueueJson(201, $fixture);
+
+        $msg = $this->client($mock)->messages->send([
+            'type' => 'poll',
+            'to'   => '+15551234567',
+            'poll' => [
+                'question' => 'Pizza?',
+                'options'  => ['Yes', 'No'],
+            ],
+        ]);
+
+        self::assertInstanceOf(Message::class, $msg);
+        self::assertSame('poll', $msg->type);
+        self::assertSame('Pizza?', $msg->poll_question);
     }
 
     public function testSendPropagatesIdempotencyKey(): void
@@ -93,29 +157,52 @@ final class MessagesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::messageFixture());
 
-        $this->client($mock)->messages->send('+15551234567', [
-            'text' => 'hi',
-            'idempotency_key' => 'key_abc',
+        $this->client($mock)->messages->send([
+            'type'             => 'text',
+            'to'               => '+15551234567',
+            'text'             => 'hi',
+            'idempotency_key'  => 'key_abc',
         ]);
 
         $req = $mock->requests()[0];
         self::assertSame('key_abc', $req->getHeaderLine('Idempotency-Key'));
-        $body = (string) $req->getBody();
         /** @var array<string, mixed> $decoded */
-        $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertArrayNotHasKey('idempotency_key', $decoded);
     }
 
-    public function testGetById(): void
+    public function testRetrieve(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::messageFixture());
 
-        $msg = $this->client($mock)->messages->get('msg_1');
+        $msg = $this->client($mock)->messages->retrieve('msg_1');
 
+        self::assertInstanceOf(Message::class, $msg);
         self::assertSame('msg_1', $msg->id);
         $req = $mock->requests()[0];
         self::assertSame('GET', $req->getMethod());
         self::assertSame('https://api.blueticks.test/v1/messages/msg_1', (string) $req->getUri());
+    }
+
+    public function testRetrieve401MapsToAuthenticationError(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, [
+            'error' => [
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
+                'request_id' => 'req_x',
+            ],
+        ]);
+
+        try {
+            $this->client($mock)->messages->retrieve('msg_1');
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('authentication_required', $e->code);
+            self::assertSame('req_x', $e->requestId);
+        }
     }
 }

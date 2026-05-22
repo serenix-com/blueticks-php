@@ -49,7 +49,12 @@ final class AudiencesResource extends BaseResource
         return Page::fromArray($raw, fn (array $row): Audience => Audience::fromArray($row));
     }
 
-    public function get(string $id, ?int $page = null): Audience
+    /**
+     * Get audience.
+     *
+     * Retrieve a single audience by ID.
+     */
+    public function retrieve(string $id, ?int $page = null): Audience
     {
         $opts = [];
         if ($page !== null) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Blueticks\Tests\Resources;
 
 use Blueticks\Blueticks;
+use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
 use Blueticks\Types\DeletedResource;
 use Blueticks\Types\Webhook;
@@ -86,17 +87,38 @@ final class WebhooksResourceTest extends TestCase
         self::assertSame('https://api.blueticks.test/v1/webhooks', (string) $req->getUri());
     }
 
-    public function testGet(): void
+    public function testRetrieve(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::webhookFixture());
 
-        $w = $this->client($mock)->webhooks->get('wh_1');
+        $w = $this->client($mock)->webhooks->retrieve('wh_1');
         self::assertSame('wh_1', $w->id);
         self::assertSame(
             'https://api.blueticks.test/v1/webhooks/wh_1',
             (string) $mock->requests()[0]->getUri(),
         );
+    }
+
+    public function testRetrieve401MapsToAuthenticationError(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, [
+            'error' => [
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
+                'request_id' => 'req_x',
+            ],
+        ]);
+
+        try {
+            $this->client($mock)->webhooks->retrieve('wh_1');
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('authentication_required', $e->code);
+            self::assertSame('req_x', $e->requestId);
+        }
     }
 
     public function testUpdateSendsPatch(): void

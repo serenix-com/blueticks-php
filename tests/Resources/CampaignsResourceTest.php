@@ -83,15 +83,36 @@ final class CampaignsResourceTest extends TestCase
         self::assertFalse($page->has_more);
     }
 
-    public function testGet(): void
+    public function testRetrieve(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::campaignFixture());
-        $this->client($mock)->campaigns->get('camp_1');
+        $this->client($mock)->campaigns->retrieve('camp_1');
         self::assertSame(
             'https://api.blueticks.test/v1/campaigns/camp_1',
             (string) $mock->requests()[0]->getUri(),
         );
+    }
+
+    public function testRetrieve401MapsToAuthenticationError(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, [
+            'error' => [
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
+                'request_id' => 'req_x',
+            ],
+        ]);
+
+        try {
+            $this->client($mock)->campaigns->retrieve('camp_1');
+            self::fail('Expected AuthenticationError');
+        } catch (\Blueticks\Errors\AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('authentication_required', $e->code);
+            self::assertSame('req_x', $e->requestId);
+        }
     }
 
     public function testPauseResumeCancel(): void

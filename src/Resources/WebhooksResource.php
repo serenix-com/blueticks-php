@@ -48,7 +48,12 @@ final class WebhooksResource extends BaseResource
         return Page::fromArray($raw, fn (array $row): Webhook => Webhook::fromArray($row));
     }
 
-    public function get(string $id): Webhook
+    /**
+     * Get webhook.
+     *
+     * Get a webhook by id.
+     */
+    public function retrieve(string $id): Webhook
     {
         $raw = $this->client->request('GET', "/v1/webhooks/{$id}");
         return Webhook::fromArray($raw);

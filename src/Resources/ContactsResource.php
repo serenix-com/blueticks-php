@@ -8,28 +8,26 @@ use Blueticks\BaseResource;
 
 final class ContactsResource extends BaseResource
 {
-    /** @return array<string, mixed> */
-    public function list(?string $query = null, ?int $limit = null, ?string $cursor = null): array
+    /**
+     * List contacts.
+     *
+     * List WhatsApp contacts known to the connected engine.
+     *
+     * @return array<string, mixed>
+     */
+    public function list(?int $limit = null, ?string $cursor = null): array
     {
-        $q = [];
-        if ($query !== null) {
-            $q['query'] = $query;
-        }
+        $query = [];
         if ($limit !== null) {
-            $q['limit'] = $limit;
+            $query['limit'] = $limit;
         }
         if ($cursor !== null) {
-            $q['cursor'] = $cursor;
+            $query['cursor'] = $cursor;
         }
-        return $this->client->request('GET', '/v1/contacts', $q !== [] ? ['query' => $q] : []);
-    }
-
-    /** @return array<string, mixed> */
-    public function getProfilePicture(string $chatId): array
-    {
         return $this->client->request(
             'GET',
-            '/v1/contacts/' . rawurlencode($chatId) . '/profile_picture',
+            '/v1/contacts',
+            $query !== [] ? ['query' => $query] : [],
         );
     }
 }

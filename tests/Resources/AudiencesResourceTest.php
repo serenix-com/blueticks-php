@@ -83,12 +83,12 @@ final class AudiencesResourceTest extends TestCase
         self::assertFalse($page->has_more);
     }
 
-    public function testGetWithPage(): void
+    public function testRetrieveWithPage(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::audienceFixture());
 
-        $this->client($mock)->audiences->get('aud_1', 2);
+        $this->client($mock)->audiences->retrieve('aud_1', 2);
         $req = $mock->requests()[0];
         self::assertSame('GET', $req->getMethod());
         self::assertSame(
@@ -97,16 +97,37 @@ final class AudiencesResourceTest extends TestCase
         );
     }
 
-    public function testGetWithoutPage(): void
+    public function testRetrieveWithoutPage(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::audienceFixture());
 
-        $this->client($mock)->audiences->get('aud_1');
+        $this->client($mock)->audiences->retrieve('aud_1');
         self::assertSame(
             'https://api.blueticks.test/v1/audiences/aud_1',
             (string) $mock->requests()[0]->getUri(),
         );
+    }
+
+    public function testRetrieve401MapsToAuthenticationError(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, [
+            'error' => [
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
+                'request_id' => 'req_x',
+            ],
+        ]);
+
+        try {
+            $this->client($mock)->audiences->retrieve('aud_1');
+            self::fail('Expected AuthenticationError');
+        } catch (\Blueticks\Errors\AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('authentication_required', $e->code);
+            self::assertSame('req_x', $e->requestId);
+        }
     }
 
     public function testUpdate(): void

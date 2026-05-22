@@ -6,6 +6,7 @@ namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
 use Blueticks\Types\Group;
+use Blueticks\Types\Page;
 
 /**
  * WhatsApp group operations.
@@ -16,6 +17,36 @@ use Blueticks\Types\Group;
  */
 final class GroupsResource extends BaseResource
 {
+    /**
+     * List groups.
+     *
+     * List the groups the connected WhatsApp engine sees. Supports cursor
+     * pagination (`limit`+`cursor`) and an optional case-insensitive substring
+     * search on the group name via `q`.
+     *
+     * @return Page<Group>
+     */
+    public function list(?int $limit = null, ?string $cursor = null, ?string $q = null): Page
+    {
+        $query = [];
+        if ($limit !== null) {
+            $query['limit'] = $limit;
+        }
+        if ($cursor !== null) {
+            $query['cursor'] = $cursor;
+        }
+        if ($q !== null) {
+            $query['q'] = $q;
+        }
+        /** @var array<string, mixed> $raw */
+        $raw = $this->client->request(
+            'GET',
+            '/v1/groups',
+            $query !== [] ? ['query' => $query] : [],
+        );
+        return Page::fromArray($raw, fn (array $row): Group => Group::fromArray($row));
+    }
+
     /**
      * Create a new group with the given name and initial participants.
      *
@@ -31,8 +62,12 @@ final class GroupsResource extends BaseResource
         return Group::fromArray($raw);
     }
 
-    /** Retrieve a group by id. */
-    public function get(string $groupId): Group
+    /**
+     * Get group.
+     *
+     * Retrieve a group by id.
+     */
+    public function retrieve(string $groupId): Group
     {
         $raw = $this->client->request('GET', '/v1/groups/' . rawurlencode($groupId));
         return Group::fromArray($raw);

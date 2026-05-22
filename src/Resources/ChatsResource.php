@@ -46,8 +46,12 @@ final class ChatsResource extends BaseResource
         return Page::fromArray($raw, fn (array $r): Chat => Chat::fromArray($r));
     }
 
-    /** Retrieve a chat by its JID. */
-    public function get(string $chatId): Chat
+    /**
+     * Get chat.
+     *
+     * Retrieve a chat by its JID.
+     */
+    public function retrieve(string $chatId): Chat
     {
         $raw = $this->client->request('GET', '/v1/chats/' . rawurlencode($chatId));
         return Chat::fromArray($raw);

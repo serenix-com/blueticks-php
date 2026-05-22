@@ -10,10 +10,14 @@ final class Message
 {
     public function __construct(
         public readonly string $id,
+        public readonly ?string $key,
         public readonly string $to,
         public readonly ?string $from,
+        public readonly string $type,
         public readonly ?string $text,
         public readonly ?string $media_url,
+        public readonly ?string $media_kind,
+        public readonly ?string $poll_question,
         public readonly string $status,
         public readonly ?string $send_at,
         public readonly string $created_at,
@@ -31,10 +35,14 @@ final class Message
     public static function fromArray(array $raw): self
     {
         self::assertString($raw, 'id');
+        self::assertStringOrNull($raw, 'key');
         self::assertString($raw, 'to');
         self::assertStringOrNull($raw, 'from');
+        self::assertString($raw, 'type');
         self::assertStringOrNull($raw, 'text');
         self::assertStringOrNull($raw, 'media_url');
+        self::assertStringOrNull($raw, 'media_kind');
+        self::assertStringOrNull($raw, 'poll_question');
         self::assertString($raw, 'status');
         self::assertStringOrNull($raw, 'send_at');
         self::assertString($raw, 'created_at');
@@ -46,10 +54,14 @@ final class Message
 
         return new self(
             id: $raw['id'],
+            key: $raw['key'],
             to: $raw['to'],
             from: $raw['from'],
+            type: $raw['type'],
             text: $raw['text'],
             media_url: $raw['media_url'],
+            media_kind: $raw['media_kind'],
+            poll_question: $raw['poll_question'],
             status: $raw['status'],
             send_at: $raw['send_at'],
             created_at: $raw['created_at'],

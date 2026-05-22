@@ -22,6 +22,7 @@ final class Blueticks
     public readonly Resources\ContactsResource $contacts;
     public readonly Resources\EnginesResource $engines;
     public readonly Resources\GroupsResource $groups;
+    public readonly Resources\NewslettersResource $newsletters;
     public readonly Resources\ScheduledMessagesResource $scheduled_messages;
     public readonly Resources\UtilsResource $utils;
     // REGEN-BOUNDARY: resource properties end
@@ -70,6 +71,7 @@ final class Blueticks
         $this->contacts = new Resources\ContactsResource($this);
         $this->engines = new Resources\EnginesResource($this);
         $this->groups = new Resources\GroupsResource($this);
+        $this->newsletters = new Resources\NewslettersResource($this);
         $this->scheduled_messages = new Resources\ScheduledMessagesResource($this);
         $this->utils = new Resources\UtilsResource($this);
         // REGEN-BOUNDARY: resource attachments end
@@ -90,7 +92,11 @@ final class Blueticks
 
     // REGEN-BOUNDARY: inline helpers start
     /**
-     * Health check.
+     * Ping.
+     *
+     * Probe the API: returns the account ID, key prefix, and granted scopes for the
+     * authenticated API key. Useful as a connection test and to inspect what an
+     * integration is allowed to do. No scope required.
      */
     public function ping(): Types\Ping
     {

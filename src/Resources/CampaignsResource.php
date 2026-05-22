@@ -49,7 +49,12 @@ final class CampaignsResource extends BaseResource
         return Page::fromArray($raw, fn (array $row): Campaign => Campaign::fromArray($row));
     }
 
-    public function get(string $id): Campaign
+    /**
+     * Get campaign.
+     *
+     * Retrieve a campaign by ID.
+     */
+    public function retrieve(string $id): Campaign
     {
         $raw = $this->client->request('GET', "/v1/campaigns/{$id}");
         return Campaign::fromArray($raw);

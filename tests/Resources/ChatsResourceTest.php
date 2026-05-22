@@ -109,12 +109,12 @@ final class ChatsResourceTest extends TestCase
         );
     }
 
-    public function testGetReturnsChat(): void
+    public function testRetrieveReturnsChat(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::chatFixture());
 
-        $chat = $this->client($mock)->chats->get('1234@c.us');
+        $chat = $this->client($mock)->chats->retrieve('1234@c.us');
 
         self::assertInstanceOf(Chat::class, $chat);
         self::assertSame('Alice', $chat->name);
@@ -122,19 +122,19 @@ final class ChatsResourceTest extends TestCase
         self::assertSame(3, $chat->unread_count);
     }
 
-    public function testGet401MapsToAuthenticationError(): void
+    public function testRetrieve401MapsToAuthenticationError(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(401, [
             'error' => [
-                'code' => 'authentication_required',
-                'message' => 'bad key',
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
                 'request_id' => 'req_x',
             ],
         ]);
 
         try {
-            $this->client($mock)->chats->get('1234@c.us');
+            $this->client($mock)->chats->retrieve('1234@c.us');
             self::fail('Expected AuthenticationError');
         } catch (AuthenticationError $e) {
             self::assertSame(401, $e->statusCode);

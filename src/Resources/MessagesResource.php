@@ -11,36 +11,48 @@ use Blueticks\Types\Page;
 final class MessagesResource extends BaseResource
 {
     /**
-     * Send (or schedule) a message.
+     * Send message.
      *
-     * @param array<string, mixed> $opts Accepts: text, media_url, media_caption, send_at, from, idempotency_key
+     * Send a message via WhatsApp. The body is a discriminated union — set the
+     * `type` field to one of `text`, `media`, or `poll`.
+     *
+     * @param array<string, mixed> $params Must include `type` (`text`|`media`|`poll`) and
+     *   `to`. Type-specific required fields: `text` for text; `media` (array with
+     *   `url`) for media; `poll` (array with `question` + `options`) for poll.
+     *   Optional shared fields: `send_at`, `from`, `reply_to`.
+     *   Pass `idempotency_key` to set the Idempotency-Key header.
      */
-    public function send(string $to, array $opts = []): Message
+    public function send(array $params): Message
     {
-        $body = ['to' => $to];
-        foreach (['text', 'media_url', 'media_caption', 'send_at', 'from'] as $k) {
-            if (array_key_exists($k, $opts)) {
-                $body[$k] = $opts[$k];
-            }
+        $requestOpts = [];
+        $body = $params;
+
+        if (isset($body['idempotency_key']) && is_string($body['idempotency_key'])) {
+            $requestOpts['headers'] = ['Idempotency-Key' => $body['idempotency_key']];
+            unset($body['idempotency_key']);
         }
 
-        $requestOpts = ['body' => $body];
-        if (isset($opts['idempotency_key']) && is_string($opts['idempotency_key'])) {
-            $requestOpts['headers'] = ['Idempotency-Key' => $opts['idempotency_key']];
-        }
+        $requestOpts['body'] = $body;
 
         $raw = $this->client->request('POST', '/v1/messages', $requestOpts);
         return Message::fromArray($raw);
     }
 
-    public function get(string $id): Message
+    /**
+     * Get message.
+     *
+     * Get the current status of a message by ID.
+     */
+    public function retrieve(string $id): Message
     {
         $raw = $this->client->request('GET', "/v1/messages/{$id}");
         return Message::fromArray($raw);
     }
 
     /**
-     * List messages sent through the API, newest first. Cursor-paginated.
+     * List messages.
+     *
+     * List messages sent through the API, newest first (cursor-paginated).
      *
      * @return Page<Message>
      */

@@ -14,18 +14,22 @@ final class MessageTest extends TestCase
     private static function fixture(): array
     {
         return [
-            'id' => 'msg_1',
-            'to' => '+15551234567',
-            'from' => null,
-            'text' => 'hello',
-            'media_url' => null,
-            'status' => 'queued',
-            'send_at' => null,
-            'created_at' => '2026-04-23T10:00:00Z',
-            'sent_at' => null,
-            'delivered_at' => null,
-            'read_at' => null,
-            'failed_at' => null,
+            'id'             => 'msg_1',
+            'key'            => null,
+            'to'             => '+15551234567',
+            'from'           => null,
+            'type'           => 'text',
+            'text'           => 'hello',
+            'media_url'      => null,
+            'media_kind'     => null,
+            'poll_question'  => null,
+            'status'         => 'queued',
+            'send_at'        => null,
+            'created_at'     => '2026-04-23T10:00:00Z',
+            'sent_at'        => null,
+            'delivered_at'   => null,
+            'read_at'        => null,
+            'failed_at'      => null,
             'failure_reason' => null,
         ];
     }
@@ -34,10 +38,14 @@ final class MessageTest extends TestCase
     {
         $m = Message::fromArray(self::fixture());
         self::assertSame('msg_1', $m->id);
+        self::assertNull($m->key);
         self::assertSame('+15551234567', $m->to);
         self::assertNull($m->from);
+        self::assertSame('text', $m->type);
         self::assertSame('hello', $m->text);
         self::assertNull($m->media_url);
+        self::assertNull($m->media_kind);
+        self::assertNull($m->poll_question);
         self::assertSame('queued', $m->status);
         self::assertSame('2026-04-23T10:00:00Z', $m->created_at);
         self::assertNull($m->sent_at);
@@ -47,24 +55,26 @@ final class MessageTest extends TestCase
         self::assertNull($m->failure_reason);
     }
 
-    public function testPopulatesAllOptionalFields(): void
+    public function testPopulatesMediaFields(): void
     {
         $f = self::fixture();
+        $f['type'] = 'media';
         $f['media_url'] = 'https://cdn.example.com/x.jpg';
-        $f['send_at'] = '2026-04-24T09:00:00Z';
-        $f['sent_at'] = '2026-04-23T10:00:01Z';
-        $f['delivered_at'] = '2026-04-23T10:00:02Z';
-        $f['read_at'] = '2026-04-23T10:00:03Z';
-        $f['failed_at'] = '2026-04-23T10:00:04Z';
-        $f['failure_reason'] = 'blocked';
+        $f['media_kind'] = 'image';
         $m = Message::fromArray($f);
+        self::assertSame('media', $m->type);
         self::assertSame('https://cdn.example.com/x.jpg', $m->media_url);
-        self::assertSame('2026-04-24T09:00:00Z', $m->send_at);
-        self::assertSame('2026-04-23T10:00:01Z', $m->sent_at);
-        self::assertSame('2026-04-23T10:00:02Z', $m->delivered_at);
-        self::assertSame('2026-04-23T10:00:03Z', $m->read_at);
-        self::assertSame('2026-04-23T10:00:04Z', $m->failed_at);
-        self::assertSame('blocked', $m->failure_reason);
+        self::assertSame('image', $m->media_kind);
+    }
+
+    public function testPopulatesPollFields(): void
+    {
+        $f = self::fixture();
+        $f['type'] = 'poll';
+        $f['poll_question'] = 'Pizza?';
+        $m = Message::fromArray($f);
+        self::assertSame('poll', $m->type);
+        self::assertSame('Pizza?', $m->poll_question);
     }
 
     public function testFromArrayRequiresId(): void
@@ -72,6 +82,14 @@ final class MessageTest extends TestCase
         $this->expectException(ValidationError::class);
         $f = self::fixture();
         unset($f['id']);
+        Message::fromArray($f);
+    }
+
+    public function testFromArrayRequiresType(): void
+    {
+        $this->expectException(ValidationError::class);
+        $f = self::fixture();
+        $f['type'] = 42;
         Message::fromArray($f);
     }
 }

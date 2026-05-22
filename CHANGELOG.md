@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.2.0 — 2026-05-22
+
+OpenAPI parity pass. The SDK now matches `backend/openapi.json`
+operation-for-operation; an engineless drift check
+(`.github/workflows/sdk-spec-drift.yml`) gates future regressions. The
+`/v1/*` surface is pre-release — none of these changes affect production
+callers yet.
+
+### Changed
+
+- `messages->send()` now takes the discriminated body shape matching the
+  backend's strict `anyOf` (BE#50):
+  ```php
+  $client->messages->send(['type' => 'text', 'to' => '+1...', 'text' => 'hi']);
+  $client->messages->send(['type' => 'media', 'to' => '+1...', 'media' => ['url' => '...', 'kind' => 'image']]);
+  $client->messages->send(['type' => 'poll', 'to' => '+1...', 'poll' => ['question' => '...', 'options' => [...]]]);
+  ```
+- Single-item GETs now use `->retrieve($id)` instead of `->get($id)`:
+  `audiences`, `campaigns`, `chats`, `groups`, `webhooks`, `messages`,
+  `scheduledMessages`. Also `engines->status()` → `engines->retrieve()`.
+- `newsletters->create()` returns the typed `Newsletter` DTO (8 fields).
+
+### Added
+
+- `newsletters->list($params)` — `GET /v1/newsletters` (cursor-paginated → `Page<Newsletter>`)
+- `newsletters->retrieve(string $id): Newsletter` — `GET /v1/newsletters/{id}`
+- `ping->retrieve(): Ping` — typed DTO (`account_id`, `key_prefix`, `scopes`)
+- `Message` now exposes `key`, `type`, `media_kind`, `poll_question`, `link_preview`
+
+### Removed
+
+- `engines->me()`, `engines->logout()`, `engines->reload()`
+- `contacts->getProfilePicture()`
+
+### Fixed
+
+- `groups->list()` was documented at `dev.blueticks.co` but absent from the
+  SDK for ~9 days — now present.
+
 ## 4.0.1 — 2026-04-30
 
 ### BREAKING (completes 4.0.0)
