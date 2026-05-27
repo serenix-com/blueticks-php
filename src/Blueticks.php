@@ -14,7 +14,6 @@ final class Blueticks
 
     // REGEN-BOUNDARY: resource properties start
     public readonly Resources\AccountResource $account;
-    public readonly Resources\MessagesResource $messages;
     public readonly Resources\WebhooksResource $webhooks;
     public readonly Resources\AudiencesResource $audiences;
     public readonly Resources\CampaignsResource $campaigns;
@@ -63,7 +62,6 @@ final class Blueticks
 
         // REGEN-BOUNDARY: resource attachments start
         $this->account = new Resources\AccountResource($this);
-        $this->messages = new Resources\MessagesResource($this);
         $this->webhooks = new Resources\WebhooksResource($this);
         $this->audiences = new Resources\AudiencesResource($this);
         $this->campaigns = new Resources\CampaignsResource($this);
