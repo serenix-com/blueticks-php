@@ -205,4 +205,43 @@ final class MessagesResourceTest extends TestCase
             self::assertSame('req_x', $e->requestId);
         }
     }
+
+    public function testUpdatePatchesMessage(): void
+    {
+        $mock = new MockTransport();
+        $fixture = self::messageFixture();
+        $fixture['text'] = 'edited';
+        $mock->enqueueJson(200, $fixture);
+
+        $msg = $this->client($mock)->messages->update('msg_xyz', ['text' => 'edited']);
+
+        self::assertInstanceOf(Message::class, $msg);
+        self::assertSame('edited', $msg->text);
+        $req = $mock->requests()[0];
+        self::assertSame('PATCH', $req->getMethod());
+        self::assertSame('https://api.blueticks.test/v1/messages/msg_xyz', (string) $req->getUri());
+        /** @var array<string, mixed> $decoded */
+        $decoded = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(['text' => 'edited'], $decoded);
+    }
+
+    public function testUpdate401MapsToAuthenticationError(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, [
+            'error' => [
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
+                'request_id' => 'req_upd',
+            ],
+        ]);
+
+        try {
+            $this->client($mock)->messages->update('msg_xyz', ['text' => 'x']);
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('req_upd', $e->requestId);
+        }
+    }
 }

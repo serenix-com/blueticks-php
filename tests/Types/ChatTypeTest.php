@@ -17,8 +17,10 @@ final class ChatTypeTest extends TestCase
             'id' => '972544325389@c.us',
             'name' => 'Noam',
             'is_group' => false,
+            'is_newsletter' => false,
             'last_message_at' => '2026-04-29T12:34:56Z',
             'unread_count' => 3,
+            'marked_unread' => false,
         ];
     }
 
@@ -28,8 +30,10 @@ final class ChatTypeTest extends TestCase
         self::assertSame('972544325389@c.us', $c->id);
         self::assertSame('Noam', $c->name);
         self::assertFalse($c->is_group);
+        self::assertFalse($c->is_newsletter);
         self::assertSame('2026-04-29T12:34:56Z', $c->last_message_at);
         self::assertSame(3, $c->unread_count);
+        self::assertFalse($c->marked_unread);
     }
 
     public function testNullableFieldsAccepted(): void
@@ -38,13 +42,16 @@ final class ChatTypeTest extends TestCase
             'id' => '120363012345678901@g.us',
             'name' => null,
             'is_group' => true,
+            'is_newsletter' => false,
             'last_message_at' => null,
             'unread_count' => null,
+            'marked_unread' => true,
         ]);
         self::assertNull($c->name);
         self::assertTrue($c->is_group);
         self::assertNull($c->last_message_at);
         self::assertNull($c->unread_count);
+        self::assertTrue($c->marked_unread);
     }
 
     public function testMissingRequiredIdThrows(): void

@@ -73,4 +73,21 @@ final class MessagesResource extends BaseResource
         );
         return Page::fromArray($raw, fn (array $row): Message => Message::fromArray($row));
     }
+
+    /**
+     * Update message.
+     *
+     * Edit a previously-queued message that has not dispatched yet. Accepts a
+     * subset of `text`, `media_url`, `media_caption`, `send_at` — at least one
+     * is required. Returns 400 once the message has advanced past the editable
+     * window (status not in `pending`/`sending`).
+     *
+     * @param array<string, mixed> $params Allowed keys: `text`, `media_url`,
+     *   `media_caption`, `send_at`. At least one is required.
+     */
+    public function update(string $id, array $params): Message
+    {
+        $raw = $this->client->request('PATCH', "/v1/messages/{$id}", ['body' => $params]);
+        return Message::fromArray($raw);
+    }
 }

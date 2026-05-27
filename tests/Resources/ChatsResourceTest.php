@@ -44,8 +44,10 @@ final class ChatsResourceTest extends TestCase
             'id' => '1234@c.us',
             'name' => 'Alice',
             'is_group' => false,
+            'is_newsletter' => false,
             'last_message_at' => '2026-04-23T10:00:00Z',
             'unread_count' => 3,
+            'marked_unread' => false,
         ];
     }
 
