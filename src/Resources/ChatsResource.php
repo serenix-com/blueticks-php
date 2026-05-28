@@ -12,6 +12,7 @@ use Blueticks\Types\ChatMessage;
 use Blueticks\Types\ChatRef;
 use Blueticks\Types\LoadOlderMessagesResponse;
 use Blueticks\Types\MediaUrlResponse;
+use Blueticks\Types\Message;
 use Blueticks\Types\MessageAck;
 use Blueticks\Types\OkResponse;
 use Blueticks\Types\Page;
@@ -192,6 +193,41 @@ final class ChatsResource extends BaseResource
             '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/media_url',
         );
         return MediaUrlResponse::fromArray($raw);
+    }
+
+    /**
+     * Send message to chat.
+     *
+     * Send a message immediately to a specific chat. The body is the same
+     * discriminated union as `POST /v1/scheduled-messages` minus `to`
+     * (derived from the URL path) and `send_at` (fire-and-forget).
+     * Variants: `text`, `media`, `poll`.
+     *
+     * @param array<string, mixed> $params Must include `type`
+     *   (`text`|`media`|`poll`). Type-specific required fields: `text`
+     *   for text; `media` (array with `url` or `data_base64`) for media;
+     *   `poll` (array with `question` + `options`) for poll. Optional
+     *   shared fields: `from`, `reply_to`, `mentions`. Pass
+     *   `idempotency_key` to set the Idempotency-Key header.
+     */
+    public function sendMessage(string $chatId, array $params): Message
+    {
+        $requestOpts = [];
+        $body = $params;
+
+        if (isset($body['idempotency_key']) && is_string($body['idempotency_key'])) {
+            $requestOpts['headers'] = ['Idempotency-Key' => $body['idempotency_key']];
+            unset($body['idempotency_key']);
+        }
+
+        $requestOpts['body'] = $body;
+
+        $raw = $this->client->request(
+            'POST',
+            '/v1/chats/' . rawurlencode($chatId) . '/messages',
+            $requestOpts,
+        );
+        return Message::fromArray($raw);
     }
 
     /**

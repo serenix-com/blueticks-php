@@ -14,10 +14,12 @@ use Blueticks\Types\ChatMessage;
 use Blueticks\Types\ChatRef;
 use Blueticks\Types\LoadOlderMessagesResponse;
 use Blueticks\Types\MediaUrlResponse;
+use Blueticks\Types\Message;
 use Blueticks\Types\MessageAck;
 use Blueticks\Types\OkResponse;
 use Blueticks\Types\Page;
 use Blueticks\Types\Participant;
+use Blueticks\Types\SendInChatRequest;
 use PHPUnit\Framework\TestCase;
 
 final class ChatsResourceTest extends TestCase
@@ -292,6 +294,159 @@ final class ChatsResourceTest extends TestCase
 
         self::assertInstanceOf(MediaUrlResponse::class, $r);
         self::assertSame('https://cdn.example.com/x.jpg', $r->url);
+    }
+
+    /** @return array<string, mixed> */
+    private static function sentMessageFixture(): array
+    {
+        return [
+            'id'             => 'snt_1',
+            'key'            => 'true_1234@c.us_ABCDEF',
+            'to'             => '1234@c.us',
+            'from'           => null,
+            'type'           => 'text',
+            'text'           => 'hello chat',
+            'media_url'      => null,
+            'media_kind'     => null,
+            'poll_question'  => null,
+            'status'         => 'sending',
+            'send_at'        => null,
+            'created_at'     => '2026-04-23T10:00:00Z',
+            'sent_at'        => null,
+            'delivered_at'   => null,
+            'read_at'        => null,
+            'failed_at'      => null,
+            'failure_reason' => null,
+        ];
+    }
+
+    public function testSendMessageText(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(201, self::sentMessageFixture());
+
+        $msg = $this->client($mock)->chats->sendMessage('1234@c.us', [
+            'type' => SendInChatRequest::TYPE_TEXT,
+            'text' => 'hello chat',
+        ]);
+
+        self::assertInstanceOf(Message::class, $msg);
+        self::assertSame('1234@c.us', $msg->to);
+        self::assertSame('text', $msg->type);
+        self::assertSame('hello chat', $msg->text);
+
+        $req = $mock->requests()[0];
+        self::assertSame('POST', $req->getMethod());
+        self::assertSame(
+            'https://api.blueticks.test/v1/chats/1234%40c.us/messages',
+            (string) $req->getUri(),
+        );
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('text', $body['type']);
+        self::assertSame('hello chat', $body['text']);
+        self::assertArrayNotHasKey('to', $body);
+        self::assertArrayNotHasKey('send_at', $body);
+    }
+
+    public function testSendMessageMedia(): void
+    {
+        $fixture = self::sentMessageFixture();
+        $fixture['type'] = 'media';
+        $fixture['text'] = null;
+        $fixture['media_url'] = 'https://cdn.example.com/receipt.pdf';
+        $fixture['media_kind'] = 'document';
+        $mock = new MockTransport();
+        $mock->enqueueJson(201, $fixture);
+
+        $msg = $this->client($mock)->chats->sendMessage('1234@c.us', [
+            'type'  => SendInChatRequest::TYPE_MEDIA,
+            'media' => [
+                'url'      => 'https://cdn.example.com/receipt.pdf',
+                'kind'     => 'document',
+                'filename' => 'receipt.pdf',
+            ],
+        ]);
+
+        self::assertInstanceOf(Message::class, $msg);
+        self::assertSame('media', $msg->type);
+        self::assertSame('https://cdn.example.com/receipt.pdf', $msg->media_url);
+
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $mock->requests()[0]->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('media', $body['type']);
+        self::assertSame('https://cdn.example.com/receipt.pdf', $body['media']['url']);
+        self::assertSame('document', $body['media']['kind']);
+    }
+
+    public function testSendMessagePoll(): void
+    {
+        $fixture = self::sentMessageFixture();
+        $fixture['type'] = 'poll';
+        $fixture['text'] = null;
+        $fixture['poll_question'] = 'Pizza?';
+        $mock = new MockTransport();
+        $mock->enqueueJson(201, $fixture);
+
+        $msg = $this->client($mock)->chats->sendMessage('1234@c.us', [
+            'type' => SendInChatRequest::TYPE_POLL,
+            'poll' => [
+                'question' => 'Pizza?',
+                'options'  => ['Yes', 'No'],
+            ],
+        ]);
+
+        self::assertInstanceOf(Message::class, $msg);
+        self::assertSame('poll', $msg->type);
+        self::assertSame('Pizza?', $msg->poll_question);
+
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $mock->requests()[0]->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('poll', $body['type']);
+        self::assertSame('Pizza?', $body['poll']['question']);
+        self::assertSame(['Yes', 'No'], $body['poll']['options']);
+    }
+
+    public function testSendMessagePropagatesIdempotencyKey(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(201, self::sentMessageFixture());
+
+        $this->client($mock)->chats->sendMessage('1234@c.us', [
+            'type'            => 'text',
+            'text'            => 'hi',
+            'idempotency_key' => 'key_chat_abc',
+        ]);
+
+        $req = $mock->requests()[0];
+        self::assertSame('key_chat_abc', $req->getHeaderLine('Idempotency-Key'));
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertArrayNotHasKey('idempotency_key', $body);
+    }
+
+    public function testSendMessage401MapsToAuthenticationError(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, [
+            'error' => [
+                'code'       => 'authentication_required',
+                'message'    => 'bad key',
+                'request_id' => 'req_send_chat',
+            ],
+        ]);
+
+        try {
+            $this->client($mock)->chats->sendMessage('1234@c.us', [
+                'type' => 'text',
+                'text' => 'hi',
+            ]);
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('authentication_required', $e->code);
+            self::assertSame('req_send_chat', $e->requestId);
+        }
     }
 
     public function testBatchMessageAcksPostsKeysAndReturnsRows(): void
