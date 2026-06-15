@@ -21,9 +21,10 @@ final class Message
         public readonly string $status,
         public readonly ?string $send_at,
         public readonly string $created_at,
-        public readonly ?string $sent_at,
-        public readonly ?string $delivered_at,
+        public readonly ?string $confirmed_at,
+        public readonly ?string $received_at,
         public readonly ?string $read_at,
+        public readonly ?string $played_at,
         public readonly ?string $failed_at,
         public readonly ?string $failure_reason,
     ) {
@@ -46,9 +47,10 @@ final class Message
         self::assertString($raw, 'status');
         self::assertStringOrNull($raw, 'send_at');
         self::assertString($raw, 'created_at');
-        self::assertStringOrNull($raw, 'sent_at');
-        self::assertStringOrNull($raw, 'delivered_at');
+        self::assertStringOrNull($raw, 'confirmed_at');
+        self::assertStringOrNull($raw, 'received_at');
         self::assertStringOrNull($raw, 'read_at');
+        self::assertStringOrNull($raw, 'played_at');
         self::assertStringOrNull($raw, 'failed_at');
         self::assertStringOrNull($raw, 'failure_reason');
 
@@ -65,9 +67,10 @@ final class Message
             status: $raw['status'],
             send_at: $raw['send_at'],
             created_at: $raw['created_at'],
-            sent_at: $raw['sent_at'],
-            delivered_at: $raw['delivered_at'],
+            confirmed_at: $raw['confirmed_at'],
+            received_at: $raw['received_at'],
             read_at: $raw['read_at'],
+            played_at: $raw['played_at'],
             failed_at: $raw['failed_at'],
             failure_reason: $raw['failure_reason'],
         );

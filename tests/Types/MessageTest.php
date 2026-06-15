@@ -23,12 +23,13 @@ final class MessageTest extends TestCase
             'media_url'      => null,
             'media_kind'     => null,
             'poll_question'  => null,
-            'status'         => 'queued',
+            'status'         => 'pending',
             'send_at'        => null,
             'created_at'     => '2026-04-23T10:00:00Z',
-            'sent_at'        => null,
-            'delivered_at'   => null,
+            'confirmed_at'   => null,
+            'received_at'    => null,
             'read_at'        => null,
+            'played_at'      => null,
             'failed_at'      => null,
             'failure_reason' => null,
         ];
@@ -46,10 +47,10 @@ final class MessageTest extends TestCase
         self::assertNull($m->media_url);
         self::assertNull($m->media_kind);
         self::assertNull($m->poll_question);
-        self::assertSame('queued', $m->status);
+        self::assertSame('pending', $m->status);
         self::assertSame('2026-04-23T10:00:00Z', $m->created_at);
-        self::assertNull($m->sent_at);
-        self::assertNull($m->delivered_at);
+        self::assertNull($m->confirmed_at);
+        self::assertNull($m->received_at);
         self::assertNull($m->read_at);
         self::assertNull($m->failed_at);
         self::assertNull($m->failure_reason);

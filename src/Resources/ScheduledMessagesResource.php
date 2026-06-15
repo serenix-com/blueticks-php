@@ -77,10 +77,10 @@ final class ScheduledMessagesResource extends BaseResource
     /**
      * Update message.
      *
-     * Edit a previously-queued message that has not dispatched yet. Accepts a
+     * Edit a previously-pending message that has not dispatched yet. Accepts a
      * subset of `text`, `media_url`, `media_caption`, `send_at` — at least one
      * is required. Returns 400 once the message has advanced past the editable
-     * window (status not in `pending`/`sending`).
+     * window (status is no longer `pending`).
      *
      * @param array<string, mixed> $params Allowed keys: `text`, `media_url`,
      *   `media_caption`, `send_at`. At least one is required.

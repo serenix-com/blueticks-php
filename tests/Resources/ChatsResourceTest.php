@@ -174,7 +174,7 @@ final class ChatsResourceTest extends TestCase
         ]);
 
         $page = $this->client($mock)->chats->listMessages('1234@c.us', [
-            'mode' => 'history',
+            'order' => 'asc',
             'message_types' => ['document'],
         ]);
 
@@ -309,12 +309,13 @@ final class ChatsResourceTest extends TestCase
             'media_url'      => null,
             'media_kind'     => null,
             'poll_question'  => null,
-            'status'         => 'sending',
+            'status'         => 'confirmed',
             'send_at'        => null,
             'created_at'     => '2026-04-23T10:00:00Z',
-            'sent_at'        => null,
-            'delivered_at'   => null,
+            'confirmed_at'   => '2026-04-23T10:00:00Z',
+            'received_at'    => null,
             'read_at'        => null,
+            'played_at'      => null,
             'failed_at'      => null,
             'failure_reason' => null,
         ];

@@ -98,7 +98,7 @@ final class ChatsResource extends BaseResource
      * List messages in a chat.
      *
      * @param array<string, mixed> $opts Accepts:
-     *   - mode ('latest'|'history')
+     *   - order ('asc'|'desc') — asc = oldest-first, desc = newest-first (default)
      *   - query (free-text search)
      *   - since / until (ISO 8601 date-time bounds)
      *   - limit / cursor (pagination)
@@ -109,8 +109,8 @@ final class ChatsResource extends BaseResource
      */
     public function listMessages(string $chatId, array $opts = []): Page
     {
-        $q = ['mode' => $opts['mode'] ?? 'latest'];
-        foreach (['query', 'since', 'until', 'limit', 'cursor'] as $k) {
+        $q = [];
+        foreach (['order', 'query', 'since', 'until', 'limit', 'cursor'] as $k) {
             if (array_key_exists($k, $opts)) {
                 $q[$k] = $opts[$k];
             }
