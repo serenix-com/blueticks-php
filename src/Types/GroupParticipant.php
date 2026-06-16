@@ -9,9 +9,9 @@ use Blueticks\Errors\ValidationError;
 final class GroupParticipant
 {
     public function __construct(
-        public readonly string $chat_id,
-        public readonly bool $is_admin,
-        public readonly bool $is_super_admin,
+        public readonly string $chatId,
+        public readonly bool $isAdmin,
+        public readonly bool $isSuperAdmin,
         public readonly ?string $name,
     ) {
     }
@@ -21,24 +21,24 @@ final class GroupParticipant
      */
     public static function fromArray(array $data): self
     {
-        self::assertString($data, 'chat_id');
-        self::assertBool($data, 'is_admin');
-        self::assertBool($data, 'is_super_admin');
+        self::assertString($data, 'chatId');
+        self::assertBool($data, 'isAdmin');
+        self::assertBool($data, 'isSuperAdmin');
         self::assertStringOrNull($data, 'name');
 
         /** @var string $chatId */
-        $chatId = $data['chat_id'];
+        $chatId = $data['chatId'];
         /** @var bool $isAdmin */
-        $isAdmin = $data['is_admin'];
+        $isAdmin = $data['isAdmin'];
         /** @var bool $isSuperAdmin */
-        $isSuperAdmin = $data['is_super_admin'];
+        $isSuperAdmin = $data['isSuperAdmin'];
         /** @var ?string $name */
         $name = $data['name'];
 
         return new self(
-            chat_id: $chatId,
-            is_admin: $isAdmin,
-            is_super_admin: $isSuperAdmin,
+            chatId: $chatId,
+            isAdmin: $isAdmin,
+            isSuperAdmin: $isSuperAdmin,
             name: $name,
         );
     }

@@ -38,7 +38,7 @@ final class WebhooksResourceTest extends TestCase
             'events' => ['message.delivered'],
             'description' => null,
             'status' => 'enabled',
-            'created_at' => '2026-04-23T10:00:00Z',
+            'createdAt' => '2026-04-23T10:00:00Z',
         ];
     }
 
@@ -72,15 +72,15 @@ final class WebhooksResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data' => [self::webhookFixture(), self::webhookFixture()],
-            'has_more' => false,
-            'next_cursor' => null,
+            'hasMore' => false,
+            'nextCursor' => null,
         ]);
 
         $page = $this->client($mock)->webhooks->list();
         self::assertCount(2, $page->data);
         self::assertInstanceOf(Webhook::class, $page->data[0]);
-        self::assertFalse($page->has_more);
-        self::assertNull($page->next_cursor);
+        self::assertFalse($page->hasMore);
+        self::assertNull($page->nextCursor);
 
         $req = $mock->requests()[0];
         self::assertSame('GET', $req->getMethod());
@@ -107,7 +107,7 @@ final class WebhooksResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 

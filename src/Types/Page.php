@@ -9,9 +9,9 @@ use Blueticks\Errors\ValidationError;
 /**
  * Cursor-paginated list envelope returned by every v1 list endpoint.
  *
- * Iterate `data` for the current page; pass `next_cursor` back as the
+ * Iterate `data` for the current page; pass `nextCursor` back as the
  * `cursor` argument of the next `list()` call to continue. When
- * `has_more` is false, `next_cursor` is null and iteration is complete.
+ * `hasMore` is false, `nextCursor` is null and iteration is complete.
  *
  * @template T of object
  */
@@ -22,8 +22,8 @@ final class Page
      */
     public function __construct(
         public readonly array $data,
-        public readonly bool $has_more,
-        public readonly ?string $next_cursor,
+        public readonly bool $hasMore,
+        public readonly ?string $nextCursor,
     ) {
     }
 
@@ -38,12 +38,12 @@ final class Page
         if (!is_array($raw['data'] ?? null)) {
             throw new ValidationError(message: "Expected 'data' to be an array on paginated response");
         }
-        if (!is_bool($raw['has_more'] ?? null)) {
-            throw new ValidationError(message: "Expected 'has_more' to be a boolean on paginated response");
+        if (!is_bool($raw['hasMore'] ?? null)) {
+            throw new ValidationError(message: "Expected 'hasMore' to be a boolean on paginated response");
         }
-        $nextCursor = $raw['next_cursor'] ?? null;
+        $nextCursor = $raw['nextCursor'] ?? null;
         if ($nextCursor !== null && !is_string($nextCursor)) {
-            throw new ValidationError(message: "Expected 'next_cursor' to be a string or null on paginated response");
+            throw new ValidationError(message: "Expected 'nextCursor' to be a string or null on paginated response");
         }
 
         $items = [];
@@ -55,6 +55,6 @@ final class Page
             $items[] = $mapItem($row);
         }
 
-        return new self($items, $raw['has_more'], $nextCursor);
+        return new self($items, $raw['hasMore'], $nextCursor);
     }
 }

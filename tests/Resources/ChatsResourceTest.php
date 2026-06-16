@@ -45,11 +45,11 @@ final class ChatsResourceTest extends TestCase
         return [
             'id' => '1234@c.us',
             'name' => 'Alice',
-            'is_group' => false,
-            'is_newsletter' => false,
-            'last_message_at' => '2026-04-23T10:00:00Z',
-            'unread_count' => 3,
-            'marked_unread' => false,
+            'isGroup' => false,
+            'isNewsletter' => false,
+            'lastMessageAt' => '2026-04-23T10:00:00Z',
+            'unreadCount' => 3,
+            'markedUnread' => false,
         ];
     }
 
@@ -57,9 +57,9 @@ final class ChatsResourceTest extends TestCase
     private static function participantFixture(): array
     {
         return [
-            'chat_id' => '4321@c.us',
-            'is_admin' => true,
-            'is_super_admin' => false,
+            'chatId' => '4321@c.us',
+            'isAdmin' => true,
+            'isSuperAdmin' => false,
         ];
     }
 
@@ -68,12 +68,12 @@ final class ChatsResourceTest extends TestCase
     {
         return [
             'key' => 'true_1234@c.us_ABCDEF',
-            'chat_id' => '1234@c.us',
+            'chatId' => '1234@c.us',
             'from' => '1234@c.us',
             'timestamp' => '2026-04-23T10:00:00Z',
             'text' => 'hello world',
             'type' => 'chat',
-            'from_me' => false,
+            'fromMe' => false,
             'ack' => 3,
         ];
     }
@@ -93,8 +93,8 @@ final class ChatsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data' => [self::chatFixture()],
-            'has_more' => false,
-            'next_cursor' => null,
+            'hasMore' => false,
+            'nextCursor' => null,
         ]);
 
         $page = $this->client($mock)->chats->list(query: 'Alice', limit: 10);
@@ -103,7 +103,7 @@ final class ChatsResourceTest extends TestCase
         self::assertCount(1, $page->data);
         self::assertInstanceOf(Chat::class, $page->data[0]);
         self::assertSame('Alice', $page->data[0]->name);
-        self::assertFalse($page->has_more);
+        self::assertFalse($page->hasMore);
 
         $req = $mock->requests()[0];
         self::assertSame('GET', $req->getMethod());
@@ -122,8 +122,8 @@ final class ChatsResourceTest extends TestCase
 
         self::assertInstanceOf(Chat::class, $chat);
         self::assertSame('Alice', $chat->name);
-        self::assertFalse($chat->is_group);
-        self::assertSame(3, $chat->unread_count);
+        self::assertFalse($chat->isGroup);
+        self::assertSame(3, $chat->unreadCount);
     }
 
     public function testRetrieve401MapsToAuthenticationError(): void
@@ -133,7 +133,7 @@ final class ChatsResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -152,8 +152,8 @@ final class ChatsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data' => [self::participantFixture()],
-            'has_more' => false,
-            'next_cursor' => null,
+            'hasMore' => false,
+            'nextCursor' => null,
         ]);
 
         $page = $this->client($mock)->chats->listParticipants('1234@g.us');
@@ -161,7 +161,7 @@ final class ChatsResourceTest extends TestCase
         self::assertInstanceOf(Page::class, $page);
         self::assertCount(1, $page->data);
         self::assertInstanceOf(Participant::class, $page->data[0]);
-        self::assertTrue($page->data[0]->is_admin);
+        self::assertTrue($page->data[0]->isAdmin);
     }
 
     public function testListMessagesReturnsPageOfChatMessages(): void
@@ -169,21 +169,28 @@ final class ChatsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data' => [self::chatMessageFixture()],
-            'has_more' => true,
-            'next_cursor' => 'cur_123',
+            'hasMore' => true,
+            'nextCursor' => 'cur_123',
         ]);
 
         $page = $this->client($mock)->chats->listMessages('1234@c.us', [
             'order' => 'asc',
-            'message_types' => ['document'],
+            'messageTypes' => ['document'],
         ]);
 
         self::assertInstanceOf(Page::class, $page);
         self::assertCount(1, $page->data);
         self::assertInstanceOf(ChatMessage::class, $page->data[0]);
         self::assertSame('hello world', $page->data[0]->text);
-        self::assertTrue($page->has_more);
-        self::assertSame('cur_123', $page->next_cursor);
+        self::assertTrue($page->hasMore);
+        self::assertSame('cur_123', $page->nextCursor);
+
+        $req = $mock->requests()[0];
+        self::assertStringStartsWith(
+            'https://api.blueticks.test/v1/messages?',
+            (string) $req->getUri(),
+        );
+        self::assertStringContainsString('chatId=1234%40c.us', (string) $req->getUri());
     }
 
     public function testGetMessageReturnsChatMessage(): void
@@ -191,11 +198,19 @@ final class ChatsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::chatMessageFixture());
 
-        $msg = $this->client($mock)->chats->getMessage('1234@c.us', 'true_1234@c.us_ABCDEF');
+        $msg = $this->client($mock)->chats->getMessage('true_1234@c.us_ABCDEF', '1234@c.us');
 
         self::assertInstanceOf(ChatMessage::class, $msg);
         self::assertSame('hello world', $msg->text);
         self::assertSame('chat', $msg->type);
+
+        $req = $mock->requests()[0];
+        self::assertSame('GET', $req->getMethod());
+        self::assertStringStartsWith(
+            'https://api.blueticks.test/v1/messages/true_1234%40c.us_ABCDEF',
+            (string) $req->getUri(),
+        );
+        self::assertStringContainsString('chatId=1234%40c.us', (string) $req->getUri());
     }
 
     public function testGetMediaReturnsChatMedia(): void
@@ -203,11 +218,17 @@ final class ChatsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::chatMediaFixture());
 
-        $media = $this->client($mock)->chats->getMedia('1234@c.us', 'true_1234@c.us_ABCDEF');
+        $media = $this->client($mock)->chats->getMedia('true_1234@c.us_ABCDEF');
 
         self::assertInstanceOf(ChatMedia::class, $media);
         self::assertSame('image/jpeg', $media->mimetype);
         self::assertSame('x.jpg', $media->filename);
+
+        $req = $mock->requests()[0];
+        self::assertSame(
+            'https://api.blueticks.test/v1/messages/media/true_1234%40c.us_ABCDEF',
+            (string) $req->getUri(),
+        );
     }
 
     public function testMarkReadReturnsOkResponse(): void
@@ -231,12 +252,12 @@ final class ChatsResourceTest extends TestCase
     public function testOpenReturnsChatRef(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, ['chat_id' => '1234@c.us']);
+        $mock->enqueueJson(200, ['chatId' => '1234@c.us']);
 
         $ref = $this->client($mock)->chats->open('1234@c.us');
 
         self::assertInstanceOf(ChatRef::class, $ref);
-        self::assertSame('1234@c.us', $ref->chat_id);
+        self::assertSame('1234@c.us', $ref->chatId);
 
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());
@@ -247,10 +268,17 @@ final class ChatsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, ['ack' => 3]);
 
-        $a = $this->client($mock)->chats->getMessageAck('1234@c.us', 'true_1234@c.us_ABCDEF');
+        $a = $this->client($mock)->chats->getMessageAck('true_1234@c.us_ABCDEF');
 
         self::assertInstanceOf(MessageAck::class, $a);
         self::assertSame(3, $a->ack);
+
+        $req = $mock->requests()[0];
+        self::assertSame('GET', $req->getMethod());
+        self::assertSame(
+            'https://api.blueticks.test/v1/messages/ack/true_1234%40c.us_ABCDEF',
+            (string) $req->getUri(),
+        );
     }
 
     public function testReactReturnsOkResponseAndPostsEmoji(): void
@@ -258,12 +286,17 @@ final class ChatsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, ['ok' => true]);
 
-        $r = $this->client($mock)->chats->react('1234@c.us', 'true_1234@c.us_ABCDEF', "\u{1F44D}");
+        $r = $this->client($mock)->chats->react('true_1234@c.us_ABCDEF', "\u{1F44D}", '1234@c.us');
 
         self::assertInstanceOf(OkResponse::class, $r);
 
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());
+        self::assertStringStartsWith(
+            'https://api.blueticks.test/v1/messages/reactions/true_1234%40c.us_ABCDEF',
+            (string) $req->getUri(),
+        );
+        self::assertStringContainsString('chatId=1234%40c.us', (string) $req->getUri());
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(["\u{1F44D}"], [$body['emoji']]);
@@ -273,16 +306,23 @@ final class ChatsResourceTest extends TestCase
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
-            'total_messages' => 1200,
+            'totalMessages' => 1200,
             'added' => 50,
-            'can_load_more' => true,
+            'canLoadMore' => true,
         ]);
 
         $r = $this->client($mock)->chats->loadOlderMessages('1234@c.us');
 
         self::assertInstanceOf(LoadOlderMessagesResponse::class, $r);
         self::assertSame(50, $r->added);
-        self::assertTrue($r->can_load_more);
+        self::assertTrue($r->canLoadMore);
+
+        $req = $mock->requests()[0];
+        self::assertSame('POST', $req->getMethod());
+        self::assertSame(
+            'https://api.blueticks.test/v1/messages/load_older/1234%40c.us',
+            (string) $req->getUri(),
+        );
     }
 
     public function testGetMediaUrlReturnsMediaUrlResponse(): void
@@ -290,10 +330,16 @@ final class ChatsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, ['url' => 'https://cdn.example.com/x.jpg']);
 
-        $r = $this->client($mock)->chats->getMediaUrl('1234@c.us', 'true_1234@c.us_ABCDEF');
+        $r = $this->client($mock)->chats->getMediaUrl('true_1234@c.us_ABCDEF');
 
         self::assertInstanceOf(MediaUrlResponse::class, $r);
         self::assertSame('https://cdn.example.com/x.jpg', $r->url);
+
+        $req = $mock->requests()[0];
+        self::assertSame(
+            'https://api.blueticks.test/v1/messages/media_url/true_1234%40c.us_ABCDEF',
+            (string) $req->getUri(),
+        );
     }
 
     /** @return array<string, mixed> */
@@ -306,18 +352,18 @@ final class ChatsResourceTest extends TestCase
             'from'           => null,
             'type'           => 'text',
             'text'           => 'hello chat',
-            'media_url'      => null,
-            'media_kind'     => null,
-            'poll_question'  => null,
+            'mediaUrl'      => null,
+            'mediaKind'     => null,
+            'pollQuestion'  => null,
             'status'         => 'confirmed',
-            'send_at'        => null,
-            'created_at'     => '2026-04-23T10:00:00Z',
-            'confirmed_at'   => '2026-04-23T10:00:00Z',
-            'received_at'    => null,
-            'read_at'        => null,
-            'played_at'      => null,
-            'failed_at'      => null,
-            'failure_reason' => null,
+            'sendAt'        => null,
+            'createdAt'     => '2026-04-23T10:00:00Z',
+            'confirmedAt'   => '2026-04-23T10:00:00Z',
+            'receivedAt'    => null,
+            'readAt'        => null,
+            'playedAt'      => null,
+            'failedAt'      => null,
+            'failureReason' => null,
         ];
     }
 
@@ -339,7 +385,7 @@ final class ChatsResourceTest extends TestCase
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());
         self::assertSame(
-            'https://api.blueticks.test/v1/chats/1234%40c.us/messages',
+            'https://api.blueticks.test/v1/messages/1234%40c.us',
             (string) $req->getUri(),
         );
         /** @var array<string, mixed> $body */
@@ -347,7 +393,7 @@ final class ChatsResourceTest extends TestCase
         self::assertSame('text', $body['type']);
         self::assertSame('hello chat', $body['text']);
         self::assertArrayNotHasKey('to', $body);
-        self::assertArrayNotHasKey('send_at', $body);
+        self::assertArrayNotHasKey('sendAt', $body);
     }
 
     public function testSendMessageMedia(): void
@@ -355,29 +401,27 @@ final class ChatsResourceTest extends TestCase
         $fixture = self::sentMessageFixture();
         $fixture['type'] = 'media';
         $fixture['text'] = null;
-        $fixture['media_url'] = 'https://cdn.example.com/receipt.pdf';
-        $fixture['media_kind'] = 'document';
+        $fixture['mediaUrl'] = 'https://cdn.example.com/receipt.pdf';
+        $fixture['mediaKind'] = 'document';
         $mock = new MockTransport();
         $mock->enqueueJson(201, $fixture);
 
         $msg = $this->client($mock)->chats->sendMessage('1234@c.us', [
-            'type'  => SendInChatRequest::TYPE_MEDIA,
-            'media' => [
-                'url'      => 'https://cdn.example.com/receipt.pdf',
-                'kind'     => 'document',
-                'filename' => 'receipt.pdf',
-            ],
+            'type'          => SendInChatRequest::TYPE_MEDIA,
+            'mediaUrl'      => 'https://cdn.example.com/receipt.pdf',
+            'mediaKind'     => 'document',
+            'mediaFilename' => 'receipt.pdf',
         ]);
 
         self::assertInstanceOf(Message::class, $msg);
         self::assertSame('media', $msg->type);
-        self::assertSame('https://cdn.example.com/receipt.pdf', $msg->media_url);
+        self::assertSame('https://cdn.example.com/receipt.pdf', $msg->mediaUrl);
 
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $mock->requests()[0]->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('media', $body['type']);
-        self::assertSame('https://cdn.example.com/receipt.pdf', $body['media']['url']);
-        self::assertSame('document', $body['media']['kind']);
+        self::assertSame('https://cdn.example.com/receipt.pdf', $body['mediaUrl']);
+        self::assertSame('document', $body['mediaKind']);
     }
 
     public function testSendMessagePoll(): void
@@ -385,27 +429,25 @@ final class ChatsResourceTest extends TestCase
         $fixture = self::sentMessageFixture();
         $fixture['type'] = 'poll';
         $fixture['text'] = null;
-        $fixture['poll_question'] = 'Pizza?';
+        $fixture['pollQuestion'] = 'Pizza?';
         $mock = new MockTransport();
         $mock->enqueueJson(201, $fixture);
 
         $msg = $this->client($mock)->chats->sendMessage('1234@c.us', [
-            'type' => SendInChatRequest::TYPE_POLL,
-            'poll' => [
-                'question' => 'Pizza?',
-                'options'  => ['Yes', 'No'],
-            ],
+            'type'         => SendInChatRequest::TYPE_POLL,
+            'pollQuestion' => 'Pizza?',
+            'pollOptions'  => ['Yes', 'No'],
         ]);
 
         self::assertInstanceOf(Message::class, $msg);
         self::assertSame('poll', $msg->type);
-        self::assertSame('Pizza?', $msg->poll_question);
+        self::assertSame('Pizza?', $msg->pollQuestion);
 
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $mock->requests()[0]->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('poll', $body['type']);
-        self::assertSame('Pizza?', $body['poll']['question']);
-        self::assertSame(['Yes', 'No'], $body['poll']['options']);
+        self::assertSame('Pizza?', $body['pollQuestion']);
+        self::assertSame(['Yes', 'No'], $body['pollOptions']);
     }
 
     public function testSendMessagePropagatesIdempotencyKey(): void
@@ -416,14 +458,14 @@ final class ChatsResourceTest extends TestCase
         $this->client($mock)->chats->sendMessage('1234@c.us', [
             'type'            => 'text',
             'text'            => 'hi',
-            'idempotency_key' => 'key_chat_abc',
+            'idempotencyKey' => 'key_chat_abc',
         ]);
 
         $req = $mock->requests()[0];
         self::assertSame('key_chat_abc', $req->getHeaderLine('Idempotency-Key'));
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertArrayNotHasKey('idempotency_key', $body);
+        self::assertArrayNotHasKey('idempotencyKey', $body);
     }
 
     public function testSendMessage401MapsToAuthenticationError(): void
@@ -433,7 +475,7 @@ final class ChatsResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_send_chat',
+                'requestId' => 'req_send_chat',
             ],
         ]);
 
@@ -475,14 +517,14 @@ final class ChatsResourceTest extends TestCase
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());
         self::assertSame(
-            'https://api.blueticks.test/v1/chats/message_acks',
+            'https://api.blueticks.test/v1/messages/acks',
             (string) $req->getUri(),
         );
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(
             ['true_1234@c.us_ABC', 'true_1234@c.us_DEF'],
-            $body['message_keys'],
+            $body['messageKeys'],
         );
     }
 }

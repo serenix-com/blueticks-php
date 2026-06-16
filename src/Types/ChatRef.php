@@ -9,12 +9,12 @@ use Blueticks\Errors\ValidationError;
 /**
  * Lightweight reference to a chat by id. Returned by endpoints that
  * acknowledge an action against a chat without echoing the full Chat
- * object (e.g. `POST /v1/chats/{chat_id}/open`).
+ * object (e.g. `POST /v1/chats/{chatId}/open`).
  */
 final class ChatRef
 {
     public function __construct(
-        public readonly string $chat_id,
+        public readonly string $chatId,
     ) {
     }
 
@@ -23,10 +23,10 @@ final class ChatRef
      */
     public static function fromArray(array $data): self
     {
-        if (!array_key_exists('chat_id', $data) || !is_string($data['chat_id'])) {
-            throw new ValidationError(message: "Missing or non-string field 'chat_id' in ChatRef response");
+        if (!array_key_exists('chatId', $data) || !is_string($data['chatId'])) {
+            throw new ValidationError(message: "Missing or non-string field 'chatId' in ChatRef response");
         }
 
-        return new self(chat_id: $data['chat_id']);
+        return new self(chatId: $data['chatId']);
     }
 }

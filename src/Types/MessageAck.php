@@ -8,7 +8,7 @@ use Blueticks\Errors\ValidationError;
 
 /**
  * Single-message delivery status returned by
- * `GET /v1/chats/{chat_id}/messages/{key}/ack`.
+ * `GET /v1/messages/ack/{waMessageKey}`.
  *
  * `ack` semantics: -1=error, 0=pending, 1=server, 2=device, 3=read,
  * 4=played; null when no engine response.

@@ -14,8 +14,8 @@ final class PingTypeTest extends TestCase
     private static function fixture(): array
     {
         return [
-            'account_id' => 'acct_abc123',
-            'key_prefix' => 'bt_live_xy',
+            'accountId' => 'acct_abc123',
+            'keyPrefix' => 'bt_live_xy',
             'scopes' => ['messages:read', 'messages:write'],
         ];
     }
@@ -23,8 +23,8 @@ final class PingTypeTest extends TestCase
     public function testFromArrayHappyPath(): void
     {
         $ping = Ping::fromArray(self::fixture());
-        self::assertSame('acct_abc123', $ping->account_id);
-        self::assertSame('bt_live_xy', $ping->key_prefix);
+        self::assertSame('acct_abc123', $ping->accountId);
+        self::assertSame('bt_live_xy', $ping->keyPrefix);
         self::assertSame(['messages:read', 'messages:write'], $ping->scopes);
     }
 
@@ -32,7 +32,7 @@ final class PingTypeTest extends TestCase
     {
         $this->expectException(ValidationError::class);
         $f = self::fixture();
-        unset($f['account_id']);
+        unset($f['accountId']);
         Ping::fromArray($f);
     }
 
@@ -40,7 +40,7 @@ final class PingTypeTest extends TestCase
     {
         $this->expectException(ValidationError::class);
         $f = self::fixture();
-        $f['account_id'] = 123;
+        $f['accountId'] = 123;
         Ping::fromArray($f);
     }
 
@@ -65,6 +65,6 @@ final class PingTypeTest extends TestCase
         $f = self::fixture();
         $f['extra'] = 'ignored';
         $ping = Ping::fromArray($f);
-        self::assertSame('acct_abc123', $ping->account_id);
+        self::assertSame('acct_abc123', $ping->accountId);
     }
 }

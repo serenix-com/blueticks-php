@@ -14,10 +14,10 @@ final class AppendContactsResultTest extends TestCase
     {
         $r = AppendContactsResult::fromArray([
             'added' => 5,
-            'contact_count' => 42,
+            'contactCount' => 42,
         ]);
         self::assertSame(5, $r->added);
-        self::assertSame(42, $r->contact_count);
+        self::assertSame(42, $r->contactCount);
     }
 
     public function testMissingFieldThrows(): void

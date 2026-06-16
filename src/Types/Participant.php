@@ -9,9 +9,9 @@ use Blueticks\Errors\ValidationError;
 final class Participant
 {
     public function __construct(
-        public readonly string $chat_id,
-        public readonly bool $is_admin,
-        public readonly ?bool $is_super_admin,
+        public readonly string $chatId,
+        public readonly bool $isAdmin,
+        public readonly ?bool $isSuperAdmin,
     ) {
     }
 
@@ -20,26 +20,26 @@ final class Participant
      */
     public static function fromArray(array $raw): self
     {
-        if (!array_key_exists('chat_id', $raw) || !is_string($raw['chat_id'])) {
-            throw new ValidationError(message: "Missing or non-string field 'chat_id' in Participant response");
+        if (!array_key_exists('chatId', $raw) || !is_string($raw['chatId'])) {
+            throw new ValidationError(message: "Missing or non-string field 'chatId' in Participant response");
         }
-        if (!array_key_exists('is_admin', $raw) || !is_bool($raw['is_admin'])) {
-            throw new ValidationError(message: "Missing or non-bool field 'is_admin' in Participant response");
+        if (!array_key_exists('isAdmin', $raw) || !is_bool($raw['isAdmin'])) {
+            throw new ValidationError(message: "Missing or non-bool field 'isAdmin' in Participant response");
         }
         if (
-            array_key_exists('is_super_admin', $raw)
-            && $raw['is_super_admin'] !== null
-            && !is_bool($raw['is_super_admin'])
+            array_key_exists('isSuperAdmin', $raw)
+            && $raw['isSuperAdmin'] !== null
+            && !is_bool($raw['isSuperAdmin'])
         ) {
             throw new ValidationError(
-                message: "Field 'is_super_admin' must be bool or null in Participant response",
+                message: "Field 'isSuperAdmin' must be bool or null in Participant response",
             );
         }
 
         return new self(
-            chat_id: $raw['chat_id'],
-            is_admin: $raw['is_admin'],
-            is_super_admin: $raw['is_super_admin'] ?? null,
+            chatId: $raw['chatId'],
+            isAdmin: $raw['isAdmin'],
+            isSuperAdmin: $raw['isSuperAdmin'] ?? null,
         );
     }
 }

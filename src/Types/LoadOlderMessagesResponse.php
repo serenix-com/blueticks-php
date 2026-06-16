@@ -8,16 +8,16 @@ use Blueticks\Errors\ValidationError;
 
 /**
  * Response payload for
- * `POST /v1/chats/{chat_id}/messages/load_older`. Reports how many
+ * `POST /v1/messages/load_older/{chatId}`. Reports how many
  * historical messages the engine ingested from the phone and whether
  * more pages remain.
  */
 final class LoadOlderMessagesResponse
 {
     public function __construct(
-        public readonly ?int $total_messages,
+        public readonly ?int $totalMessages,
         public readonly ?int $added,
-        public readonly bool $can_load_more,
+        public readonly bool $canLoadMore,
     ) {
     }
 
@@ -26,23 +26,23 @@ final class LoadOlderMessagesResponse
      */
     public static function fromArray(array $data): self
     {
-        self::assertIntOrNull($data, 'total_messages');
+        self::assertIntOrNull($data, 'totalMessages');
         self::assertIntOrNull($data, 'added');
-        if (!array_key_exists('can_load_more', $data) || !is_bool($data['can_load_more'])) {
+        if (!array_key_exists('canLoadMore', $data) || !is_bool($data['canLoadMore'])) {
             throw new ValidationError(
-                message: "Missing or non-bool field 'can_load_more' in LoadOlderMessagesResponse response",
+                message: "Missing or non-bool field 'canLoadMore' in LoadOlderMessagesResponse response",
             );
         }
 
         /** @var ?int $totalMessages */
-        $totalMessages = $data['total_messages'];
+        $totalMessages = $data['totalMessages'];
         /** @var ?int $added */
         $added = $data['added'];
 
         return new self(
-            total_messages: $totalMessages,
+            totalMessages: $totalMessages,
             added: $added,
-            can_load_more: $data['can_load_more'],
+            canLoadMore: $data['canLoadMore'],
         );
     }
 

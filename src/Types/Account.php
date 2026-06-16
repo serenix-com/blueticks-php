@@ -12,7 +12,7 @@ final class Account
         public readonly string $id,
         public readonly string $name,
         public readonly ?string $timezone,
-        public readonly string $created_at,
+        public readonly string $createdAt,
     ) {
     }
 
@@ -24,13 +24,13 @@ final class Account
         self::assertString($data, 'id');
         self::assertString($data, 'name');
         self::assertStringOrNull($data, 'timezone');
-        self::assertString($data, 'created_at');
+        self::assertString($data, 'createdAt');
 
         return new self(
             id: $data['id'],
             name: $data['name'],
             timezone: $data['timezone'],
-            created_at: $data['created_at'],
+            createdAt: $data['createdAt'],
         );
     }
 

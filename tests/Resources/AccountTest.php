@@ -34,7 +34,7 @@ final class AccountTest extends TestCase
             'id' => 'acct_abc123',
             'name' => 'Acme Corp',
             'timezone' => 'Europe/Berlin',
-            'created_at' => '2026-04-23T10:00:00Z',
+            'createdAt' => '2026-04-23T10:00:00Z',
         ]);
 
         $account = $this->client($mock)->account->retrieve();
@@ -55,7 +55,7 @@ final class AccountTest extends TestCase
             'error' => [
                 'code' => 'authentication_required',
                 'message' => 'bad key',
-                'request_id' => 'req_zzz',
+                'requestId' => 'req_zzz',
             ],
         ]);
 

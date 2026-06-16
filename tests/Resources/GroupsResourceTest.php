@@ -36,28 +36,28 @@ final class GroupsResourceTest extends TestCase
             'name' => 'Acme Team',
             'description' => 'Internal coordination',
             'owner' => '1234567890@c.us',
-            'created_at' => '2026-04-23T10:00:00Z',
-            'last_message_at' => '2026-04-30T10:00:00Z',
-            'participant_count' => 3,
+            'createdAt' => '2026-04-23T10:00:00Z',
+            'lastMessageAt' => '2026-04-30T10:00:00Z',
+            'participantCount' => 3,
             'announce' => false,
             'restrict' => false,
             'participants' => [
                 [
-                    'chat_id' => '1234567890@c.us',
-                    'is_admin' => true,
-                    'is_super_admin' => true,
+                    'chatId' => '1234567890@c.us',
+                    'isAdmin' => true,
+                    'isSuperAdmin' => true,
                     'name' => 'Owner',
                 ],
                 [
-                    'chat_id' => '5550000001@c.us',
-                    'is_admin' => false,
-                    'is_super_admin' => false,
+                    'chatId' => '5550000001@c.us',
+                    'isAdmin' => false,
+                    'isSuperAdmin' => false,
                     'name' => 'Alice',
                 ],
                 [
-                    'chat_id' => '5550000002@c.us',
-                    'is_admin' => false,
-                    'is_super_admin' => false,
+                    'chatId' => '5550000002@c.us',
+                    'isAdmin' => false,
+                    'isSuperAdmin' => false,
                     'name' => null,
                 ],
             ],
@@ -69,8 +69,8 @@ final class GroupsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data'        => [self::groupFixture()],
-            'has_more'    => false,
-            'next_cursor' => null,
+            'hasMore'    => false,
+            'nextCursor' => null,
         ]);
 
         $page = $this->client($mock)->groups->list();
@@ -90,7 +90,7 @@ final class GroupsResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -133,7 +133,7 @@ final class GroupsResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -154,7 +154,7 @@ final class GroupsResourceTest extends TestCase
 
         $g = $this->client($mock)->groups->retrieve('1234567890-9876543210@g.us');
         self::assertInstanceOf(Group::class, $g);
-        self::assertSame(3, $g->participant_count);
+        self::assertSame(3, $g->participantCount);
     }
 
     public function testUpdate(): void
@@ -194,7 +194,7 @@ final class GroupsResourceTest extends TestCase
         );
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame(['chat_id' => '5550000003@c.us'], $body);
+        self::assertSame(['chatId' => '5550000003@c.us'], $body);
     }
 
     public function testRemoveMember(): void
@@ -260,9 +260,9 @@ final class GroupsResourceTest extends TestCase
         $mock->enqueueJson(200, self::groupFixture());
 
         $g = $this->client($mock)->groups->setPicture('1234567890-9876543210@g.us', [
-            'file_data_url' => 'data:image/png;base64,iVBORw0KGgo=',
-            'file_name' => 'logo.png',
-            'file_mime_type' => 'image/png',
+            'fileDataUrl' => 'data:image/png;base64,iVBORw0KGgo=',
+            'fileName' => 'logo.png',
+            'fileMimeType' => 'image/png',
         ]);
         self::assertInstanceOf(Group::class, $g);
 
@@ -274,9 +274,9 @@ final class GroupsResourceTest extends TestCase
         );
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('data:image/png;base64,iVBORw0KGgo=', $body['file_data_url']);
-        self::assertSame('logo.png', $body['file_name']);
-        self::assertSame('image/png', $body['file_mime_type']);
+        self::assertSame('data:image/png;base64,iVBORw0KGgo=', $body['fileDataUrl']);
+        self::assertSame('logo.png', $body['fileName']);
+        self::assertSame('image/png', $body['fileMimeType']);
     }
 
     public function testLeaveReturnsVoid(): void

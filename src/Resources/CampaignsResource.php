@@ -12,12 +12,12 @@ final class CampaignsResource extends BaseResource
 {
     /**
      * @param array<string, mixed> $opts
-     *   Accepts: text, media_url, media_caption, from, on_missing_variable
+     *   Accepts: text, mediaUrl, mediaCaption, from, onMissingVariable
      */
     public function create(string $name, string $audienceId, array $opts = []): Campaign
     {
-        $body = ['name' => $name, 'audience_id' => $audienceId];
-        foreach (['text', 'media_url', 'media_caption', 'from', 'on_missing_variable'] as $k) {
+        $body = ['name' => $name, 'audienceId' => $audienceId];
+        foreach (['text', 'mediaUrl', 'mediaCaption', 'from', 'onMissingVariable'] as $k) {
             if (array_key_exists($k, $opts)) {
                 $body[$k] = $opts[$k];
             }

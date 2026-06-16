@@ -15,18 +15,18 @@ final class Message
         public readonly ?string $from,
         public readonly string $type,
         public readonly ?string $text,
-        public readonly ?string $media_url,
-        public readonly ?string $media_kind,
-        public readonly ?string $poll_question,
+        public readonly ?string $mediaUrl,
+        public readonly ?string $mediaKind,
+        public readonly ?string $pollQuestion,
         public readonly string $status,
-        public readonly ?string $send_at,
-        public readonly string $created_at,
-        public readonly ?string $confirmed_at,
-        public readonly ?string $received_at,
-        public readonly ?string $read_at,
-        public readonly ?string $played_at,
-        public readonly ?string $failed_at,
-        public readonly ?string $failure_reason,
+        public readonly ?string $sendAt,
+        public readonly string $createdAt,
+        public readonly ?string $confirmedAt,
+        public readonly ?string $receivedAt,
+        public readonly ?string $readAt,
+        public readonly ?string $playedAt,
+        public readonly ?string $failedAt,
+        public readonly ?string $failureReason,
     ) {
     }
 
@@ -41,18 +41,18 @@ final class Message
         self::assertStringOrNull($raw, 'from');
         self::assertString($raw, 'type');
         self::assertStringOrNull($raw, 'text');
-        self::assertStringOrNull($raw, 'media_url');
-        self::assertStringOrNull($raw, 'media_kind');
-        self::assertStringOrNull($raw, 'poll_question');
+        self::assertStringOrNull($raw, 'mediaUrl');
+        self::assertStringOrNull($raw, 'mediaKind');
+        self::assertStringOrNull($raw, 'pollQuestion');
         self::assertString($raw, 'status');
-        self::assertStringOrNull($raw, 'send_at');
-        self::assertString($raw, 'created_at');
-        self::assertStringOrNull($raw, 'confirmed_at');
-        self::assertStringOrNull($raw, 'received_at');
-        self::assertStringOrNull($raw, 'read_at');
-        self::assertStringOrNull($raw, 'played_at');
-        self::assertStringOrNull($raw, 'failed_at');
-        self::assertStringOrNull($raw, 'failure_reason');
+        self::assertStringOrNull($raw, 'sendAt');
+        self::assertString($raw, 'createdAt');
+        self::assertStringOrNull($raw, 'confirmedAt');
+        self::assertStringOrNull($raw, 'receivedAt');
+        self::assertStringOrNull($raw, 'readAt');
+        self::assertStringOrNull($raw, 'playedAt');
+        self::assertStringOrNull($raw, 'failedAt');
+        self::assertStringOrNull($raw, 'failureReason');
 
         return new self(
             id: $raw['id'],
@@ -61,18 +61,18 @@ final class Message
             from: $raw['from'],
             type: $raw['type'],
             text: $raw['text'],
-            media_url: $raw['media_url'],
-            media_kind: $raw['media_kind'],
-            poll_question: $raw['poll_question'],
+            mediaUrl: $raw['mediaUrl'],
+            mediaKind: $raw['mediaKind'],
+            pollQuestion: $raw['pollQuestion'],
             status: $raw['status'],
-            send_at: $raw['send_at'],
-            created_at: $raw['created_at'],
-            confirmed_at: $raw['confirmed_at'],
-            received_at: $raw['received_at'],
-            read_at: $raw['read_at'],
-            played_at: $raw['played_at'],
-            failed_at: $raw['failed_at'],
-            failure_reason: $raw['failure_reason'],
+            sendAt: $raw['sendAt'],
+            createdAt: $raw['createdAt'],
+            confirmedAt: $raw['confirmedAt'],
+            receivedAt: $raw['receivedAt'],
+            readAt: $raw['readAt'],
+            playedAt: $raw['playedAt'],
+            failedAt: $raw['failedAt'],
+            failureReason: $raw['failureReason'],
         );
     }
 

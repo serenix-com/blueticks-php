@@ -38,18 +38,18 @@ final class ScheduledMessagesResourceTest extends TestCase
             'from'           => null,
             'type'           => 'text',
             'text'           => 'hello',
-            'media_url'      => null,
-            'media_kind'     => null,
-            'poll_question'  => null,
+            'mediaUrl'      => null,
+            'mediaKind'     => null,
+            'pollQuestion'  => null,
             'status'         => 'pending',
-            'send_at'        => null,
-            'created_at'     => '2026-04-23T10:00:00Z',
-            'confirmed_at'   => null,
-            'received_at'    => null,
-            'read_at'        => null,
-            'played_at'      => null,
-            'failed_at'      => null,
-            'failure_reason' => null,
+            'sendAt'        => null,
+            'createdAt'     => '2026-04-23T10:00:00Z',
+            'confirmedAt'   => null,
+            'receivedAt'    => null,
+            'readAt'        => null,
+            'playedAt'      => null,
+            'failedAt'      => null,
+            'failureReason' => null,
         ];
     }
 
@@ -88,7 +88,7 @@ final class ScheduledMessagesResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -110,8 +110,8 @@ final class ScheduledMessagesResourceTest extends TestCase
     {
         $fixture = self::messageFixture();
         $fixture['type'] = 'media';
-        $fixture['media_url'] = 'https://cdn.example.com/receipt.pdf';
-        $fixture['media_kind'] = 'document';
+        $fixture['mediaUrl'] = 'https://cdn.example.com/receipt.pdf';
+        $fixture['mediaKind'] = 'document';
         $mock = new MockTransport();
         $mock->enqueueJson(201, $fixture);
 
@@ -127,7 +127,7 @@ final class ScheduledMessagesResourceTest extends TestCase
 
         self::assertInstanceOf(Message::class, $msg);
         self::assertSame('media', $msg->type);
-        self::assertSame('https://cdn.example.com/receipt.pdf', $msg->media_url);
+        self::assertSame('https://cdn.example.com/receipt.pdf', $msg->mediaUrl);
 
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $mock->requests()[0]->getBody(), true, 512, JSON_THROW_ON_ERROR);
@@ -139,7 +139,7 @@ final class ScheduledMessagesResourceTest extends TestCase
     {
         $fixture = self::messageFixture();
         $fixture['type'] = 'poll';
-        $fixture['poll_question'] = 'Pizza?';
+        $fixture['pollQuestion'] = 'Pizza?';
         $mock = new MockTransport();
         $mock->enqueueJson(201, $fixture);
 
@@ -154,7 +154,7 @@ final class ScheduledMessagesResourceTest extends TestCase
 
         self::assertInstanceOf(Message::class, $msg);
         self::assertSame('poll', $msg->type);
-        self::assertSame('Pizza?', $msg->poll_question);
+        self::assertSame('Pizza?', $msg->pollQuestion);
     }
 
     public function testCreatePropagatesIdempotencyKey(): void
@@ -166,14 +166,14 @@ final class ScheduledMessagesResourceTest extends TestCase
             'type'             => 'text',
             'to'               => '+15551234567',
             'text'             => 'hi',
-            'idempotency_key'  => 'key_abc',
+            'idempotencyKey'  => 'key_abc',
         ]);
 
         $req = $mock->requests()[0];
         self::assertSame('key_abc', $req->getHeaderLine('Idempotency-Key'));
         /** @var array<string, mixed> $decoded */
         $decoded = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertArrayNotHasKey('idempotency_key', $decoded);
+        self::assertArrayNotHasKey('idempotencyKey', $decoded);
     }
 
     public function testList(): void
@@ -181,8 +181,8 @@ final class ScheduledMessagesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data' => [self::messageFixture()],
-            'has_more' => false,
-            'next_cursor' => null,
+            'hasMore' => false,
+            'nextCursor' => null,
         ]);
 
         $page = $this->client($mock)->scheduled_messages->list();
@@ -204,8 +204,8 @@ final class ScheduledMessagesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data' => [],
-            'has_more' => false,
-            'next_cursor' => null,
+            'hasMore' => false,
+            'nextCursor' => null,
         ]);
 
         $this->client($mock)->scheduled_messages->list(limit: 25, cursor: 'cur_x');
@@ -227,7 +227,7 @@ final class ScheduledMessagesResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -265,7 +265,7 @@ final class ScheduledMessagesResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -308,7 +308,7 @@ final class ScheduledMessagesResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_upd',
+                'requestId' => 'req_upd',
             ],
         ]);
 

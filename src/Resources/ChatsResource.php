@@ -99,68 +99,92 @@ final class ChatsResource extends BaseResource
      *
      * @param array<string, mixed> $opts Accepts:
      *   - order ('asc'|'desc') — asc = oldest-first, desc = newest-first (default)
-     *   - query (free-text search)
+     *   - searchToken (free-text search)
      *   - since / until (ISO 8601 date-time bounds)
-     *   - limit / cursor (pagination)
-     *   - message_types: list<string> of allowed message kinds (e.g.
+     *   - loadFromPhoneIfNeeded (bool)
+     *   - includeMediaContent (bool)
+     *   - skip / limit (pagination)
+     *   - messageTypes: list<string> of allowed message kinds (e.g.
      *     ['document'] for PDFs). When omitted, server-side default-excludes
      *     system events (gp2/revoked/newsletter_notification).
      * @return Page<ChatMessage>
      */
     public function listMessages(string $chatId, array $opts = []): Page
     {
-        $q = [];
-        foreach (['order', 'query', 'since', 'until', 'limit', 'cursor'] as $k) {
+        $q = ['chatId' => $chatId];
+        foreach (
+            ['order', 'searchToken', 'since', 'until', 'loadFromPhoneIfNeeded', 'includeMediaContent', 'skip', 'limit']
+            as $k
+        ) {
             if (array_key_exists($k, $opts)) {
                 $q[$k] = $opts[$k];
             }
         }
-        // message_types: server accepts comma-separated form for OpenAPI
+        // messageTypes: server accepts comma-separated form for OpenAPI
         // `style: form, explode: false`. Each item must be a valid message
         // kind (chat/image/video/document/audio/ptt/sticker/gif/ptv/
         // poll_creation/location/vcard/revoked).
         if (
-            array_key_exists('message_types', $opts)
-            && is_array($opts['message_types'])
-            && $opts['message_types'] !== []
+            array_key_exists('messageTypes', $opts)
+            && is_array($opts['messageTypes'])
+            && $opts['messageTypes'] !== []
         ) {
-            $q['message_types'] = implode(',', array_map('strval', $opts['message_types']));
+            $q['messageTypes'] = implode(',', array_map('strval', $opts['messageTypes']));
         }
         $raw = $this->client->request(
             'GET',
-            '/v1/chats/' . rawurlencode($chatId) . '/messages',
+            '/v1/messages',
             ['query' => $q],
         );
         return Page::fromArray($raw, fn (array $r): ChatMessage => ChatMessage::fromArray($r));
     }
 
-    /** Retrieve a single message by WhatsApp message key. */
-    public function getMessage(string $chatId, string $key): ChatMessage
+    /**
+     * Retrieve a single message by its complete WhatsApp message key.
+     *
+     * @param ?string $chatId Optional chat hint; helps the engine locate the
+     *   message faster when the key alone is ambiguous.
+     */
+    public function getMessage(string $waMessageKey, ?string $chatId = null): ChatMessage
     {
         $raw = $this->client->request(
             'GET',
-            '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key),
+            '/v1/messages/' . rawurlencode($waMessageKey),
+            self::chatIdQuery($chatId),
         );
         return ChatMessage::fromArray($raw);
     }
 
-    /** Retrieve a single message's delivery status. */
-    public function getMessageAck(string $chatId, string $key): MessageAck
+    /**
+     * Retrieve a single message's delivery status.
+     *
+     * @param ?string $chatId Optional chat hint.
+     */
+    public function getMessageAck(string $waMessageKey, ?string $chatId = null): MessageAck
     {
         $raw = $this->client->request(
             'GET',
-            '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/ack',
+            '/v1/messages/ack/' . rawurlencode($waMessageKey),
+            self::chatIdQuery($chatId),
         );
         return MessageAck::fromArray($raw);
     }
 
-    /** React to a message with an emoji. Empty string clears any reaction. */
-    public function react(string $chatId, string $key, string $emoji): OkResponse
+    /**
+     * React to a message with an emoji. Empty string clears any reaction.
+     *
+     * @param ?string $chatId Optional chat hint.
+     */
+    public function react(string $waMessageKey, string $emoji, ?string $chatId = null): OkResponse
     {
+        $opts = ['body' => ['emoji' => $emoji]];
+        if ($chatId !== null) {
+            $opts['query'] = ['chatId' => $chatId];
+        }
         $raw = $this->client->request(
             'POST',
-            '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/reactions',
-            ['body' => ['emoji' => $emoji]],
+            '/v1/messages/reactions/' . rawurlencode($waMessageKey),
+            $opts,
         );
         return OkResponse::fromArray($raw);
     }
@@ -170,27 +194,37 @@ final class ChatsResource extends BaseResource
     {
         $raw = $this->client->request(
             'POST',
-            '/v1/chats/' . rawurlencode($chatId) . '/messages/load_older',
+            '/v1/messages/load_older/' . rawurlencode($chatId),
         );
         return LoadOlderMessagesResponse::fromArray($raw);
     }
 
-    /** Download message media (may be returned as base64). */
-    public function getMedia(string $chatId, string $key): ChatMedia
+    /**
+     * Download message media (may be returned as base64).
+     *
+     * @param ?string $chatId Optional chat hint.
+     */
+    public function getMedia(string $waMessageKey, ?string $chatId = null): ChatMedia
     {
         $raw = $this->client->request(
             'GET',
-            '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/media',
+            '/v1/messages/media/' . rawurlencode($waMessageKey),
+            self::chatIdQuery($chatId),
         );
         return ChatMedia::fromArray($raw);
     }
 
-    /** Get a hosted URL for the media bytes of a message. */
-    public function getMediaUrl(string $chatId, string $key): MediaUrlResponse
+    /**
+     * Get a hosted URL for the media bytes of a message.
+     *
+     * @param ?string $chatId Optional chat hint.
+     */
+    public function getMediaUrl(string $waMessageKey, ?string $chatId = null): MediaUrlResponse
     {
         $raw = $this->client->request(
             'GET',
-            '/v1/chats/' . rawurlencode($chatId) . '/messages/' . rawurlencode($key) . '/media_url',
+            '/v1/messages/media_url/' . rawurlencode($waMessageKey),
+            self::chatIdQuery($chatId),
         );
         return MediaUrlResponse::fromArray($raw);
     }
@@ -200,31 +234,30 @@ final class ChatsResource extends BaseResource
      *
      * Send a message immediately to a specific chat. The body is the same
      * discriminated union as `POST /v1/scheduled-messages` minus `to`
-     * (derived from the URL path) and `send_at` (fire-and-forget).
+     * (derived from the URL path) and `sendAt` (fire-and-forget).
      * Variants: `text`, `media`, `poll`.
      *
      * @param array<string, mixed> $params Must include `type`
      *   (`text`|`media`|`poll`). Type-specific required fields: `text`
-     *   for text; `media` (array with `url` or `data_base64`) for media;
-     *   `poll` (array with `question` + `options`) for poll. Optional
-     *   shared fields: `from`, `reply_to`, `mentions`. Pass
-     *   `idempotency_key` to set the Idempotency-Key header.
+     *   for text; `mediaUrl` or `mediaBase64` for media; `pollQuestion` +
+     *   `pollOptions` for poll. Optional shared fields: `from`, `replyTo`,
+     *   `mentions`. Pass `idempotencyKey` to set the Idempotency-Key header.
      */
     public function sendMessage(string $chatId, array $params): Message
     {
         $requestOpts = [];
         $body = $params;
 
-        if (isset($body['idempotency_key']) && is_string($body['idempotency_key'])) {
-            $requestOpts['headers'] = ['Idempotency-Key' => $body['idempotency_key']];
-            unset($body['idempotency_key']);
+        if (isset($body['idempotencyKey']) && is_string($body['idempotencyKey'])) {
+            $requestOpts['headers'] = ['Idempotency-Key' => $body['idempotencyKey']];
+            unset($body['idempotencyKey']);
         }
 
         $requestOpts['body'] = $body;
 
         $raw = $this->client->request(
             'POST',
-            '/v1/chats/' . rawurlencode($chatId) . '/messages',
+            '/v1/messages/' . rawurlencode($chatId),
             $requestOpts,
         );
         return Message::fromArray($raw);
@@ -239,9 +272,19 @@ final class ChatsResource extends BaseResource
     {
         $raw = $this->client->request(
             'POST',
-            '/v1/chats/message_acks',
-            ['body' => ['message_keys' => $messageKeys]],
+            '/v1/messages/acks',
+            ['body' => ['messageKeys' => $messageKeys]],
         );
         return BatchMessageAcksResponse::fromArray($raw);
+    }
+
+    /**
+     * Build the optional `chatId` query wrapper for message-key endpoints.
+     *
+     * @return array<string, mixed>
+     */
+    private static function chatIdQuery(?string $chatId): array
+    {
+        return $chatId !== null ? ['query' => ['chatId' => $chatId]] : [];
     }
 }

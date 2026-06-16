@@ -16,14 +16,14 @@ final class ChatMediaTypeTest extends TestCase
             'url' => 'https://cdn.example.com/abc.jpg',
             'mimetype' => 'image/jpeg',
             'filename' => 'pic.jpg',
-            'data_base64' => null,
-            'original_quality' => null,
-            'media_unavailable' => null,
+            'dataBase64' => null,
+            'originalQuality' => null,
+            'mediaUnavailable' => null,
         ]);
         self::assertSame('https://cdn.example.com/abc.jpg', $m->url);
         self::assertSame('image/jpeg', $m->mimetype);
-        self::assertNull($m->original_quality);
-        self::assertNull($m->media_unavailable);
+        self::assertNull($m->originalQuality);
+        self::assertNull($m->mediaUnavailable);
     }
 
     public function testOwnSentNewsletterPreviewQualityFlag(): void
@@ -32,12 +32,12 @@ final class ChatMediaTypeTest extends TestCase
             'url' => null,
             'mimetype' => 'image/jpeg',
             'filename' => null,
-            'data_base64' => '/9j/preview-bytes-here',
-            'original_quality' => false,
-            'media_unavailable' => null,
+            'dataBase64' => '/9j/preview-bytes-here',
+            'originalQuality' => false,
+            'mediaUnavailable' => null,
         ]);
-        self::assertFalse($m->original_quality);
-        self::assertSame('/9j/preview-bytes-here', $m->data_base64);
+        self::assertFalse($m->originalQuality);
+        self::assertSame('/9j/preview-bytes-here', $m->dataBase64);
     }
 
     public function testMediaUnavailableExpired(): void
@@ -46,11 +46,11 @@ final class ChatMediaTypeTest extends TestCase
             'url' => null,
             'mimetype' => null,
             'filename' => null,
-            'data_base64' => null,
-            'original_quality' => null,
-            'media_unavailable' => 'expired',
+            'dataBase64' => null,
+            'originalQuality' => null,
+            'mediaUnavailable' => 'expired',
         ]);
-        self::assertSame('expired', $m->media_unavailable);
+        self::assertSame('expired', $m->mediaUnavailable);
     }
 
     public function testMediaUnavailableAwaitingSender(): void
@@ -59,30 +59,30 @@ final class ChatMediaTypeTest extends TestCase
             'url' => null,
             'mimetype' => null,
             'filename' => null,
-            'data_base64' => null,
-            'original_quality' => null,
-            'media_unavailable' => 'awaiting_sender',
+            'dataBase64' => null,
+            'originalQuality' => null,
+            'mediaUnavailable' => 'awaiting_sender',
         ]);
-        self::assertSame('awaiting_sender', $m->media_unavailable);
+        self::assertSame('awaiting_sender', $m->mediaUnavailable);
     }
 
     public function testInvalidMediaUnavailableEnumThrows(): void
     {
         $this->expectException(ValidationError::class);
-        ChatMedia::fromArray(['media_unavailable' => 'gone_forever']);
+        ChatMedia::fromArray(['mediaUnavailable' => 'gone_forever']);
     }
 
     public function testWrongTypeOriginalQualityThrows(): void
     {
         $this->expectException(ValidationError::class);
-        ChatMedia::fromArray(['original_quality' => 'false']);
+        ChatMedia::fromArray(['originalQuality' => 'false']);
     }
 
     public function testEmptyArrayAllAbsent(): void
     {
         $m = ChatMedia::fromArray([]);
         self::assertNull($m->url);
-        self::assertNull($m->original_quality);
-        self::assertNull($m->media_unavailable);
+        self::assertNull($m->originalQuality);
+        self::assertNull($m->mediaUnavailable);
     }
 }

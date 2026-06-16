@@ -35,7 +35,7 @@ final class NewslettersResourceTest extends TestCase
             'name'         => 'My Channel',
             'description'  => 'Weekly updates',
             'owner'        => '15551234567@s.whatsapp.net',
-            'created_at'   => '2024-01-15T10:00:00Z',
+            'createdAt'   => '2024-01-15T10:00:00Z',
             'subscribers'  => 42,
             'invite'       => 'abc123def456',
             'verification' => 'UNVERIFIED',
@@ -49,8 +49,8 @@ final class NewslettersResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data'        => [$this->newsletterFixture()],
-            'has_more'    => false,
-            'next_cursor' => null,
+            'hasMore'    => false,
+            'nextCursor' => null,
         ]);
 
         $result = $this->client($mock)->newsletters->list();
@@ -60,8 +60,8 @@ final class NewslettersResourceTest extends TestCase
         self::assertInstanceOf(Newsletter::class, $result->data[0]);
         self::assertSame('120363201733549020@newsletter', $result->data[0]->id);
         self::assertSame('My Channel', $result->data[0]->name);
-        self::assertFalse($result->has_more);
-        self::assertNull($result->next_cursor);
+        self::assertFalse($result->hasMore);
+        self::assertNull($result->nextCursor);
 
         $req = $mock->requests()[0];
         self::assertSame('GET', $req->getMethod());
@@ -75,7 +75,7 @@ final class NewslettersResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -124,7 +124,7 @@ final class NewslettersResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -163,7 +163,7 @@ final class NewslettersResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 

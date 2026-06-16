@@ -16,11 +16,11 @@ final class ChatTypeTest extends TestCase
         return [
             'id' => '972544325389@c.us',
             'name' => 'Noam',
-            'is_group' => false,
-            'is_newsletter' => false,
-            'last_message_at' => '2026-04-29T12:34:56Z',
-            'unread_count' => 3,
-            'marked_unread' => false,
+            'isGroup' => false,
+            'isNewsletter' => false,
+            'lastMessageAt' => '2026-04-29T12:34:56Z',
+            'unreadCount' => 3,
+            'markedUnread' => false,
         ];
     }
 
@@ -29,11 +29,11 @@ final class ChatTypeTest extends TestCase
         $c = Chat::fromArray(self::fixture());
         self::assertSame('972544325389@c.us', $c->id);
         self::assertSame('Noam', $c->name);
-        self::assertFalse($c->is_group);
-        self::assertFalse($c->is_newsletter);
-        self::assertSame('2026-04-29T12:34:56Z', $c->last_message_at);
-        self::assertSame(3, $c->unread_count);
-        self::assertFalse($c->marked_unread);
+        self::assertFalse($c->isGroup);
+        self::assertFalse($c->isNewsletter);
+        self::assertSame('2026-04-29T12:34:56Z', $c->lastMessageAt);
+        self::assertSame(3, $c->unreadCount);
+        self::assertFalse($c->markedUnread);
     }
 
     public function testNullableFieldsAccepted(): void
@@ -41,17 +41,17 @@ final class ChatTypeTest extends TestCase
         $c = Chat::fromArray([
             'id' => '120363012345678901@g.us',
             'name' => null,
-            'is_group' => true,
-            'is_newsletter' => false,
-            'last_message_at' => null,
-            'unread_count' => null,
-            'marked_unread' => true,
+            'isGroup' => true,
+            'isNewsletter' => false,
+            'lastMessageAt' => null,
+            'unreadCount' => null,
+            'markedUnread' => true,
         ]);
         self::assertNull($c->name);
-        self::assertTrue($c->is_group);
-        self::assertNull($c->last_message_at);
-        self::assertNull($c->unread_count);
-        self::assertTrue($c->marked_unread);
+        self::assertTrue($c->isGroup);
+        self::assertNull($c->lastMessageAt);
+        self::assertNull($c->unreadCount);
+        self::assertTrue($c->markedUnread);
     }
 
     public function testMissingRequiredIdThrows(): void
@@ -66,7 +66,7 @@ final class ChatTypeTest extends TestCase
     {
         $this->expectException(ValidationError::class);
         $f = self::fixture();
-        $f['is_group'] = 'no';
+        $f['isGroup'] = 'no';
         Chat::fromArray($f);
     }
 
@@ -74,7 +74,7 @@ final class ChatTypeTest extends TestCase
     {
         $this->expectException(ValidationError::class);
         $f = self::fixture();
-        $f['unread_count'] = '3';
+        $f['unreadCount'] = '3';
         Chat::fromArray($f);
     }
 }

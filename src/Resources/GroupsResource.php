@@ -103,7 +103,7 @@ final class GroupsResource extends BaseResource
         $raw = $this->client->request(
             'POST',
             '/v1/groups/' . rawurlencode($groupId) . '/members',
-            ['body' => ['chat_id' => $chatId]],
+            ['body' => ['chatId' => $chatId]],
         );
         return Group::fromArray($raw);
     }
@@ -142,14 +142,14 @@ final class GroupsResource extends BaseResource
      * Replace the group's profile picture.
      *
      * @param array<string, mixed> $opts Accepts:
-     *   - file_data_url: string (required) — base64 data URL, PNG/JPEG, ≤20 MiB
-     *   - file_name: string
-     *   - file_mime_type: string
+     *   - fileDataUrl: string (required) — base64 data URL, PNG/JPEG, ≤20 MiB
+     *   - fileName: string
+     *   - fileMimeType: string
      */
     public function setPicture(string $groupId, array $opts): Group
     {
         $body = [];
-        foreach (['file_data_url', 'file_name', 'file_mime_type'] as $k) {
+        foreach (['fileDataUrl', 'fileName', 'fileMimeType'] as $k) {
             if (array_key_exists($k, $opts)) {
                 $body[$k] = $opts[$k];
             }

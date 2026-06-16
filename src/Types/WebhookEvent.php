@@ -14,7 +14,7 @@ final class WebhookEvent
     public function __construct(
         public readonly string $id,
         public readonly string $type,
-        public readonly string $created_at,
+        public readonly string $createdAt,
         public readonly array $data,
     ) {
     }
@@ -26,7 +26,7 @@ final class WebhookEvent
     {
         self::assertString($raw, 'id');
         self::assertString($raw, 'type');
-        self::assertString($raw, 'created_at');
+        self::assertString($raw, 'createdAt');
         if (!array_key_exists('data', $raw) || !is_array($raw['data'])) {
             throw new ValidationError(message: "Missing or non-array field 'data' in WebhookEvent response");
         }
@@ -37,7 +37,7 @@ final class WebhookEvent
         return new self(
             id: $raw['id'],
             type: $raw['type'],
-            created_at: $raw['created_at'],
+            createdAt: $raw['createdAt'],
             data: $data,
         );
     }

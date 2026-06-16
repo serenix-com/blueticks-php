@@ -13,33 +13,33 @@ final class ParticipantTypeTest extends TestCase
     public function testHappyPath(): void
     {
         $p = Participant::fromArray([
-            'chat_id' => '972544325389@c.us',
-            'is_admin' => true,
-            'is_super_admin' => false,
+            'chatId' => '972544325389@c.us',
+            'isAdmin' => true,
+            'isSuperAdmin' => false,
         ]);
-        self::assertSame('972544325389@c.us', $p->chat_id);
-        self::assertTrue($p->is_admin);
-        self::assertFalse($p->is_super_admin);
+        self::assertSame('972544325389@c.us', $p->chatId);
+        self::assertTrue($p->isAdmin);
+        self::assertFalse($p->isSuperAdmin);
     }
 
     public function testIsSuperAdminOptional(): void
     {
         $p = Participant::fromArray([
-            'chat_id' => '972544325389@c.us',
-            'is_admin' => false,
+            'chatId' => '972544325389@c.us',
+            'isAdmin' => false,
         ]);
-        self::assertNull($p->is_super_admin);
+        self::assertNull($p->isSuperAdmin);
     }
 
     public function testMissingChatIdThrows(): void
     {
         $this->expectException(ValidationError::class);
-        Participant::fromArray(['is_admin' => true]);
+        Participant::fromArray(['isAdmin' => true]);
     }
 
     public function testWrongTypeIsAdminThrows(): void
     {
         $this->expectException(ValidationError::class);
-        Participant::fromArray(['chat_id' => 'x@c.us', 'is_admin' => 'yes']);
+        Participant::fromArray(['chatId' => 'x@c.us', 'isAdmin' => 'yes']);
     }
 }

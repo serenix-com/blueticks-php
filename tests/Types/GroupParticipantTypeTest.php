@@ -13,23 +13,23 @@ final class GroupParticipantTypeTest extends TestCase
     public function testHappyPath(): void
     {
         $p = GroupParticipant::fromArray([
-            'chat_id' => '972544325389@c.us',
-            'is_admin' => true,
-            'is_super_admin' => false,
+            'chatId' => '972544325389@c.us',
+            'isAdmin' => true,
+            'isSuperAdmin' => false,
             'name' => 'Alice',
         ]);
-        self::assertSame('972544325389@c.us', $p->chat_id);
-        self::assertTrue($p->is_admin);
-        self::assertFalse($p->is_super_admin);
+        self::assertSame('972544325389@c.us', $p->chatId);
+        self::assertTrue($p->isAdmin);
+        self::assertFalse($p->isSuperAdmin);
         self::assertSame('Alice', $p->name);
     }
 
     public function testNullableNameAccepted(): void
     {
         $p = GroupParticipant::fromArray([
-            'chat_id' => '15551234@c.us',
-            'is_admin' => false,
-            'is_super_admin' => false,
+            'chatId' => '15551234@c.us',
+            'isAdmin' => false,
+            'isSuperAdmin' => false,
             'name' => null,
         ]);
         self::assertNull($p->name);
@@ -39,9 +39,9 @@ final class GroupParticipantTypeTest extends TestCase
     {
         $this->expectException(ValidationError::class);
         GroupParticipant::fromArray([
-            'chat_id' => 'x@c.us',
-            'is_admin' => true,
-            'is_super_admin' => false,
+            'chatId' => 'x@c.us',
+            'isAdmin' => true,
+            'isSuperAdmin' => false,
             // 'name' missing
         ]);
     }
@@ -50,9 +50,9 @@ final class GroupParticipantTypeTest extends TestCase
     {
         $this->expectException(ValidationError::class);
         GroupParticipant::fromArray([
-            'chat_id' => 'x@c.us',
-            'is_admin' => 'yes',
-            'is_super_admin' => false,
+            'chatId' => 'x@c.us',
+            'isAdmin' => 'yes',
+            'isSuperAdmin' => false,
             'name' => null,
         ]);
     }

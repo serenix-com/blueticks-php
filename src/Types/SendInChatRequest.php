@@ -6,7 +6,7 @@ namespace Blueticks\Types;
 
 /**
  * Marker for the discriminated request body accepted by
- * `POST /v1/chats/{chat_id}/messages` (spec schema `SendInChatRequest`).
+ * `POST /v1/messages/{chatId}` (spec schema `SendInChatRequest`).
  *
  * The PHP SDK passes request bodies as associative arrays — see
  * `ChatsResource::sendMessage()`. This class exposes the discriminator
@@ -18,15 +18,15 @@ namespace Blueticks\Types;
  *   ]);
  *
  * The shape mirrors `SendMessageRequest` minus `to` (taken from the URL
- * path) and `send_at` (this endpoint is fire-and-forget).
+ * path) and `sendAt` (this endpoint is fire-and-forget).
  *
- * Variant fields (in addition to `type`):
- *   - text:  `text` (string), optional `url`, `link_preview`, `from`,
- *            `reply_to`, `mentions`.
- *   - media: `media` (object: `url` OR `data_base64`, optional `kind`,
- *            `caption`, `filename`), optional `from`, `reply_to`, `mentions`.
- *   - poll:  `poll` (object: `question`, `options[]`, optional
- *            `allow_multiple`), optional `from`, `reply_to`, `mentions`.
+ * Variant fields (in addition to `type`), flat camelCase keys:
+ *   - text:  `text` (string), optional `linkPreview`, `from`, `replyTo`,
+ *            `mentions`.
+ *   - media: `mediaUrl` OR `mediaBase64`, optional `mediaKind`,
+ *            `mediaCaption`, `mediaFilename`, `from`, `replyTo`, `mentions`.
+ *   - poll:  `pollQuestion`, `pollOptions[]`, optional `pollAllowMultiple`,
+ *            `from`, `replyTo`, `mentions`.
  */
 final class SendInChatRequest
 {

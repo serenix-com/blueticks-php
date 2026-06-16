@@ -13,32 +13,32 @@ final class LoadOlderMessagesResponseTypeTest extends TestCase
     public function testHappyPath(): void
     {
         $r = LoadOlderMessagesResponse::fromArray([
-            'total_messages' => 1200,
+            'totalMessages' => 1200,
             'added' => 50,
-            'can_load_more' => true,
+            'canLoadMore' => true,
         ]);
-        self::assertSame(1200, $r->total_messages);
+        self::assertSame(1200, $r->totalMessages);
         self::assertSame(50, $r->added);
-        self::assertTrue($r->can_load_more);
+        self::assertTrue($r->canLoadMore);
     }
 
     public function testNullCounts(): void
     {
         $r = LoadOlderMessagesResponse::fromArray([
-            'total_messages' => null,
+            'totalMessages' => null,
             'added' => null,
-            'can_load_more' => false,
+            'canLoadMore' => false,
         ]);
-        self::assertNull($r->total_messages);
+        self::assertNull($r->totalMessages);
         self::assertNull($r->added);
-        self::assertFalse($r->can_load_more);
+        self::assertFalse($r->canLoadMore);
     }
 
     public function testMissingCanLoadMoreThrows(): void
     {
         $this->expectException(ValidationError::class);
         LoadOlderMessagesResponse::fromArray([
-            'total_messages' => 0,
+            'totalMessages' => 0,
             'added' => 0,
         ]);
     }
@@ -47,9 +47,9 @@ final class LoadOlderMessagesResponseTypeTest extends TestCase
     {
         $this->expectException(ValidationError::class);
         LoadOlderMessagesResponse::fromArray([
-            'total_messages' => 0,
+            'totalMessages' => 0,
             'added' => '50',
-            'can_load_more' => false,
+            'canLoadMore' => false,
         ]);
     }
 }

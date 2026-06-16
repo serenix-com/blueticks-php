@@ -13,7 +13,7 @@ final class Newsletter
         public readonly string $name,
         public readonly ?string $description,
         public readonly ?string $owner,
-        public readonly ?string $created_at,
+        public readonly ?string $createdAt,
         public readonly ?int $subscribers,
         public readonly ?string $invite,
         public readonly ?string $verification,
@@ -29,7 +29,7 @@ final class Newsletter
         self::assertString($data, 'name');
         self::assertStringOrNull($data, 'description');
         self::assertStringOrNull($data, 'owner');
-        self::assertStringOrNull($data, 'created_at');
+        self::assertStringOrNull($data, 'createdAt');
         self::assertIntOrNull($data, 'subscribers');
         self::assertStringOrNull($data, 'invite');
         self::assertVerificationOrNull($data, 'verification');
@@ -39,7 +39,7 @@ final class Newsletter
             name: $data['name'],
             description: $data['description'],
             owner: $data['owner'],
-            created_at: $data['created_at'],
+            createdAt: $data['createdAt'],
             subscribers: $data['subscribers'],
             invite: $data['invite'],
             verification: $data['verification'],

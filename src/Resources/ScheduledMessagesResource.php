@@ -19,17 +19,17 @@ final class ScheduledMessagesResource extends BaseResource
      * @param array<string, mixed> $params Must include `type` (`text`|`media`|`poll`) and
      *   `to`. Type-specific required fields: `text` for text; `media` (array with
      *   `url`) for media; `poll` (array with `question` + `options`) for poll.
-     *   Optional shared fields: `send_at`, `from`, `reply_to`.
-     *   Pass `idempotency_key` to set the Idempotency-Key header.
+     *   Optional shared fields: `sendAt`, `from`, `replyTo`.
+     *   Pass `idempotencyKey` to set the Idempotency-Key header.
      */
     public function create(array $params): Message
     {
         $requestOpts = [];
         $body = $params;
 
-        if (isset($body['idempotency_key']) && is_string($body['idempotency_key'])) {
-            $requestOpts['headers'] = ['Idempotency-Key' => $body['idempotency_key']];
-            unset($body['idempotency_key']);
+        if (isset($body['idempotencyKey']) && is_string($body['idempotencyKey'])) {
+            $requestOpts['headers'] = ['Idempotency-Key' => $body['idempotencyKey']];
+            unset($body['idempotencyKey']);
         }
 
         $requestOpts['body'] = $body;
@@ -78,12 +78,12 @@ final class ScheduledMessagesResource extends BaseResource
      * Update message.
      *
      * Edit a previously-pending message that has not dispatched yet. Accepts a
-     * subset of `text`, `media_url`, `media_caption`, `send_at` — at least one
+     * subset of `text`, `mediaUrl`, `mediaCaption`, `sendAt` — at least one
      * is required. Returns 400 once the message has advanced past the editable
      * window (status is no longer `pending`).
      *
-     * @param array<string, mixed> $params Allowed keys: `text`, `media_url`,
-     *   `media_caption`, `send_at`. At least one is required.
+     * @param array<string, mixed> $params Allowed keys: `text`, `mediaUrl`,
+     *   `mediaCaption`, `sendAt`. At least one is required.
      */
     public function update(string $id, array $params): Message
     {

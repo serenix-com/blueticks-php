@@ -14,11 +14,11 @@ final class Audience
     public function __construct(
         public readonly string $id,
         public readonly string $name,
-        public readonly int $contact_count,
-        public readonly string $created_at,
+        public readonly int $contactCount,
+        public readonly string $createdAt,
         public readonly ?array $contacts,
         public readonly ?int $page,
-        public readonly ?bool $has_more,
+        public readonly ?bool $hasMore,
     ) {
     }
 
@@ -29,10 +29,10 @@ final class Audience
     {
         self::assertString($raw, 'id');
         self::assertString($raw, 'name');
-        if (!array_key_exists('contact_count', $raw) || !is_int($raw['contact_count'])) {
-            throw new ValidationError(message: "Missing or non-int field 'contact_count' in Audience response");
+        if (!array_key_exists('contactCount', $raw) || !is_int($raw['contactCount'])) {
+            throw new ValidationError(message: "Missing or non-int field 'contactCount' in Audience response");
         }
-        self::assertString($raw, 'created_at');
+        self::assertString($raw, 'createdAt');
 
         $contacts = null;
         if (array_key_exists('contacts', $raw)) {
@@ -58,21 +58,21 @@ final class Audience
         }
 
         $hasMore = null;
-        if (array_key_exists('has_more', $raw) && $raw['has_more'] !== null) {
-            if (!is_bool($raw['has_more'])) {
-                throw new ValidationError(message: "Field 'has_more' must be bool or null in Audience response");
+        if (array_key_exists('hasMore', $raw) && $raw['hasMore'] !== null) {
+            if (!is_bool($raw['hasMore'])) {
+                throw new ValidationError(message: "Field 'hasMore' must be bool or null in Audience response");
             }
-            $hasMore = $raw['has_more'];
+            $hasMore = $raw['hasMore'];
         }
 
         return new self(
             id: $raw['id'],
             name: $raw['name'],
-            contact_count: $raw['contact_count'],
-            created_at: $raw['created_at'],
+            contactCount: $raw['contactCount'],
+            createdAt: $raw['createdAt'],
             contacts: $contacts,
             page: $page,
-            has_more: $hasMore,
+            hasMore: $hasMore,
         );
     }
 

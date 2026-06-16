@@ -12,8 +12,8 @@ final class ChatRefTypeTest extends TestCase
 {
     public function testHappyPath(): void
     {
-        $r = ChatRef::fromArray(['chat_id' => '972544325389@c.us']);
-        self::assertSame('972544325389@c.us', $r->chat_id);
+        $r = ChatRef::fromArray(['chatId' => '972544325389@c.us']);
+        self::assertSame('972544325389@c.us', $r->chatId);
     }
 
     public function testMissingChatIdThrows(): void
@@ -25,6 +25,6 @@ final class ChatRefTypeTest extends TestCase
     public function testWrongTypeThrows(): void
     {
         $this->expectException(ValidationError::class);
-        ChatRef::fromArray(['chat_id' => 12345]);
+        ChatRef::fromArray(['chatId' => 12345]);
     }
 }

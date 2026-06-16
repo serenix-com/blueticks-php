@@ -12,8 +12,8 @@ final class Ping
      * @param list<string> $scopes
      */
     public function __construct(
-        public readonly string $account_id,
-        public readonly string $key_prefix,
+        public readonly string $accountId,
+        public readonly string $keyPrefix,
         public readonly array $scopes,
     ) {
     }
@@ -23,16 +23,16 @@ final class Ping
      */
     public static function fromArray(array $data): self
     {
-        self::assertString($data, 'account_id');
-        self::assertString($data, 'key_prefix');
+        self::assertString($data, 'accountId');
+        self::assertString($data, 'keyPrefix');
         self::assertStringList($data, 'scopes');
 
         /** @var list<string> $scopes */
         $scopes = array_values($data['scopes']);
 
         return new self(
-            account_id: $data['account_id'],
-            key_prefix: $data['key_prefix'],
+            accountId: $data['accountId'],
+            keyPrefix: $data['keyPrefix'],
             scopes: $scopes,
         );
     }

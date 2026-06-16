@@ -38,9 +38,9 @@ final class NewslettersResource extends BaseResource
 
         return new Page(
             data: $items,
-            has_more: (bool) $data['has_more'],
-            next_cursor: isset($data['next_cursor']) && is_string($data['next_cursor'])
-                ? $data['next_cursor']
+            hasMore: (bool) $data['hasMore'],
+            nextCursor: isset($data['nextCursor']) && is_string($data['nextCursor'])
+                ? $data['nextCursor']
                 : null,
         );
     }

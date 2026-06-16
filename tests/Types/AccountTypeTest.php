@@ -17,7 +17,7 @@ final class AccountTypeTest extends TestCase
             'id' => 'acct_abc123',
             'name' => 'Acme Corp',
             'timezone' => 'Europe/Berlin',
-            'created_at' => '2026-04-23T10:00:00Z',
+            'createdAt' => '2026-04-23T10:00:00Z',
         ];
     }
 
@@ -27,7 +27,7 @@ final class AccountTypeTest extends TestCase
         self::assertSame('acct_abc123', $a->id);
         self::assertSame('Acme Corp', $a->name);
         self::assertSame('Europe/Berlin', $a->timezone);
-        self::assertSame('2026-04-23T10:00:00Z', $a->created_at);
+        self::assertSame('2026-04-23T10:00:00Z', $a->createdAt);
     }
 
     public function testFromArrayAllowsNullTimezone(): void

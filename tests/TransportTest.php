@@ -104,7 +104,7 @@ final class TransportTest extends TestCase
             'error' => [
                 'code' => 'authentication_required',
                 'message' => 'bad key',
-                'request_id' => 'req_xyz',
+                'requestId' => 'req_xyz',
             ],
         ]);
 
@@ -123,7 +123,7 @@ final class TransportTest extends TestCase
     {
         $mock = new MockTransport();
         $mock->enqueueJson(403, [
-            'error' => ['code' => 'permission_denied', 'message' => 'nope', 'request_id' => 'req_a'],
+            'error' => ['code' => 'permission_denied', 'message' => 'nope', 'requestId' => 'req_a'],
         ]);
         $this->expectException(PermissionDeniedError::class);
         $this->transport($mock)->request('GET', '/v1/ping');
@@ -132,7 +132,7 @@ final class TransportTest extends TestCase
     public function test404MapsToNotFound(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(404, ['error' => ['code' => 'not_found', 'message' => 'missing', 'request_id' => 'req_b']]);
+        $mock->enqueueJson(404, ['error' => ['code' => 'not_found', 'message' => 'missing', 'requestId' => 'req_b']]);
         $this->expectException(NotFoundError::class);
         $this->transport($mock)->request('GET', '/v1/ping');
     }
@@ -140,7 +140,7 @@ final class TransportTest extends TestCase
     public function test400MapsToBadRequest(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(400, ['error' => ['code' => 'invalid_request', 'message' => 'x', 'request_id' => 'req_c']]);
+        $mock->enqueueJson(400, ['error' => ['code' => 'invalid_request', 'message' => 'x', 'requestId' => 'req_c']]);
         $this->expectException(BadRequestError::class);
         $this->transport($mock)->request('GET', '/v1/ping');
     }
@@ -148,7 +148,7 @@ final class TransportTest extends TestCase
     public function test422MapsToBadRequest(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(422, ['error' => ['code' => 'invalid_request', 'message' => 'x', 'request_id' => 'req_d']]);
+        $mock->enqueueJson(422, ['error' => ['code' => 'invalid_request', 'message' => 'x', 'requestId' => 'req_d']]);
         $this->expectException(BadRequestError::class);
         $this->transport($mock)->request('GET', '/v1/ping');
     }
@@ -157,7 +157,7 @@ final class TransportTest extends TestCase
     {
         $mock = new MockTransport();
         $mock->enqueueJson(500, [
-            'error' => ['code' => 'internal_error', 'message' => 'oops', 'request_id' => 'req_e'],
+            'error' => ['code' => 'internal_error', 'message' => 'oops', 'requestId' => 'req_e'],
         ]);
         $this->expectException(APIError::class);
         $this->transport($mock, ['maxRetries' => 0])->request('GET', '/v1/ping');
@@ -195,7 +195,7 @@ final class TransportTest extends TestCase
     public function testRetryOn503ThenSuccess(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r1']]);
+        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'requestId' => 'r1']]);
         $mock->enqueueJson(200, ['ok' => true]);
 
         $result = $this->transport($mock)->request('GET', '/v1/ping');
@@ -210,7 +210,7 @@ final class TransportTest extends TestCase
         for ($i = 0; $i < 3; $i++) {
             $mock->enqueueJson(
                 503,
-                ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r']],
+                ['error' => ['code' => 'internal_error', 'message' => 'down', 'requestId' => 'r']],
             );
         }
 
@@ -229,7 +229,7 @@ final class TransportTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(
             429,
-            ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'request_id' => 'r']],
+            ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'requestId' => 'r']],
             ['Retry-After' => '7'],
         );
         $mock->enqueueJson(200, ['ok' => true]);
@@ -251,7 +251,7 @@ final class TransportTest extends TestCase
         for ($i = 0; $i < 3; $i++) {
             $mock->enqueueJson(
                 429,
-                ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'request_id' => 'r']],
+                ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'requestId' => 'r']],
                 ['Retry-After' => '1'],
             );
         }
@@ -268,7 +268,7 @@ final class TransportTest extends TestCase
     public function test4xxNon429DoesNotRetry(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(404, ['error' => ['code' => 'not_found', 'message' => 'missing', 'request_id' => 'r']]);
+        $mock->enqueueJson(404, ['error' => ['code' => 'not_found', 'message' => 'missing', 'requestId' => 'r']]);
 
         try {
             $this->transport($mock)->request('GET', '/v1/missing');
@@ -283,7 +283,7 @@ final class TransportTest extends TestCase
     public function testPostWithoutIdempotencyKeyDoesNotRetryOn5xx(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r']]);
+        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'requestId' => 'r']]);
         $mock->enqueueJson(200, ['ok' => true]);
 
         $this->expectException(APIError::class);
@@ -293,7 +293,7 @@ final class TransportTest extends TestCase
     public function testPostWithIdempotencyKeyDoesRetryOn5xx(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'request_id' => 'r']]);
+        $mock->enqueueJson(503, ['error' => ['code' => 'internal_error', 'message' => 'down', 'requestId' => 'r']]);
         $mock->enqueueJson(200, ['id' => 'x']);
 
         $result = $this->transport($mock)->request('POST', '/v1/things', [
@@ -335,7 +335,7 @@ final class TransportTest extends TestCase
         $future = gmdate('D, d M Y H:i:s \G\M\T', time() + 5);
         $mock->enqueueJson(
             429,
-            ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'request_id' => 'r']],
+            ['error' => ['code' => 'rate_limited', 'message' => 'slow', 'requestId' => 'r']],
             ['Retry-After' => $future],
         );
         $mock->enqueueJson(200, ['ok' => true]);

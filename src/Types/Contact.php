@@ -15,7 +15,7 @@ final class Contact
         public readonly string $id,
         public readonly string $to,
         public readonly array $variables,
-        public readonly string $added_at,
+        public readonly string $addedAt,
     ) {
     }
 
@@ -26,7 +26,7 @@ final class Contact
     {
         self::assertString($raw, 'id');
         self::assertString($raw, 'to');
-        self::assertString($raw, 'added_at');
+        self::assertString($raw, 'addedAt');
         if (!array_key_exists('variables', $raw) || !is_array($raw['variables'])) {
             throw new ValidationError(message: "Missing or non-array field 'variables' in Contact response");
         }
@@ -42,7 +42,7 @@ final class Contact
             id: $raw['id'],
             to: $raw['to'],
             variables: $variables,
-            added_at: $raw['added_at'],
+            addedAt: $raw['addedAt'],
         );
     }
 

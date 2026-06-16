@@ -19,22 +19,22 @@ final class GroupTypeTest extends TestCase
             'name' => 'Team',
             'description' => 'Internal team chat',
             'owner' => '15551234@c.us',
-            'created_at' => '2026-04-23T10:00:00Z',
-            'last_message_at' => '2026-05-01T08:30:00Z',
-            'participant_count' => 2,
+            'createdAt' => '2026-04-23T10:00:00Z',
+            'lastMessageAt' => '2026-05-01T08:30:00Z',
+            'participantCount' => 2,
             'announce' => false,
             'restrict' => true,
             'participants' => [
                 [
-                    'chat_id' => '15551234@c.us',
-                    'is_admin' => true,
-                    'is_super_admin' => true,
+                    'chatId' => '15551234@c.us',
+                    'isAdmin' => true,
+                    'isSuperAdmin' => true,
                     'name' => 'Alice',
                 ],
                 [
-                    'chat_id' => '15555678@c.us',
-                    'is_admin' => false,
-                    'is_super_admin' => false,
+                    'chatId' => '15555678@c.us',
+                    'isAdmin' => false,
+                    'isSuperAdmin' => false,
                     'name' => null,
                 ],
             ],
@@ -48,9 +48,9 @@ final class GroupTypeTest extends TestCase
         self::assertSame('Team', $g->name);
         self::assertSame('Internal team chat', $g->description);
         self::assertSame('15551234@c.us', $g->owner);
-        self::assertSame('2026-04-23T10:00:00Z', $g->created_at);
-        self::assertSame('2026-05-01T08:30:00Z', $g->last_message_at);
-        self::assertSame(2, $g->participant_count);
+        self::assertSame('2026-04-23T10:00:00Z', $g->createdAt);
+        self::assertSame('2026-05-01T08:30:00Z', $g->lastMessageAt);
+        self::assertSame(2, $g->participantCount);
         self::assertFalse($g->announce);
         self::assertTrue($g->restrict);
         self::assertIsArray($g->participants);
@@ -78,7 +78,7 @@ final class GroupTypeTest extends TestCase
     public function testWrongTypeParticipantCountThrows(): void
     {
         $raw = self::fixture();
-        $raw['participant_count'] = '2';
+        $raw['participantCount'] = '2';
         $this->expectException(ValidationError::class);
         Group::fromArray($raw);
     }

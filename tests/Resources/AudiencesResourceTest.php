@@ -34,8 +34,8 @@ final class AudiencesResourceTest extends TestCase
         return [
             'id' => 'aud_1',
             'name' => 'Customers',
-            'contact_count' => 2,
-            'created_at' => '2026-04-23T10:00:00Z',
+            'contactCount' => 2,
+            'createdAt' => '2026-04-23T10:00:00Z',
         ];
     }
 
@@ -46,7 +46,7 @@ final class AudiencesResourceTest extends TestCase
             'id' => 'ct_1',
             'to' => '+15551234567',
             'variables' => ['name' => 'Alice'],
-            'added_at' => '2026-04-23T10:00:00Z',
+            'addedAt' => '2026-04-23T10:00:00Z',
         ];
     }
 
@@ -74,13 +74,13 @@ final class AudiencesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data' => [self::audienceFixture()],
-            'has_more' => false,
-            'next_cursor' => null,
+            'hasMore' => false,
+            'nextCursor' => null,
         ]);
 
         $page = $this->client($mock)->audiences->list();
         self::assertCount(1, $page->data);
-        self::assertFalse($page->has_more);
+        self::assertFalse($page->hasMore);
     }
 
     public function testRetrieveWithPage(): void
@@ -116,7 +116,7 @@ final class AudiencesResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 
@@ -161,13 +161,13 @@ final class AudiencesResourceTest extends TestCase
     public function testAppendContacts(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, ['added' => 1, 'contact_count' => 3]);
+        $mock->enqueueJson(200, ['added' => 1, 'contactCount' => 3]);
 
         $r = $this->client($mock)->audiences->appendContacts('aud_1', [
             ['to' => '+1', 'variables' => ['x' => 'y']],
         ]);
         self::assertSame(1, $r->added);
-        self::assertSame(3, $r->contact_count);
+        self::assertSame(3, $r->contactCount);
 
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());

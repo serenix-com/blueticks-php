@@ -32,18 +32,18 @@ final class CampaignsResourceTest extends TestCase
         return [
             'id' => 'camp_1',
             'name' => 'Spring',
-            'audience_id' => 'aud_1',
+            'audienceId' => 'aud_1',
             'status' => 'pending',
-            'total_count' => 0,
-            'sent_count' => 0,
-            'delivered_count' => 0,
-            'read_count' => 0,
-            'failed_count' => 0,
+            'totalCount' => 0,
+            'sentCount' => 0,
+            'deliveredCount' => 0,
+            'readCount' => 0,
+            'failedCount' => 0,
             'from' => null,
-            'created_at' => '2026-04-23T10:00:00Z',
-            'started_at' => null,
-            'completed_at' => null,
-            'aborted_at' => null,
+            'createdAt' => '2026-04-23T10:00:00Z',
+            'startedAt' => null,
+            'completedAt' => null,
+            'abortedAt' => null,
         ];
     }
 
@@ -54,7 +54,7 @@ final class CampaignsResourceTest extends TestCase
 
         $c = $this->client($mock)->campaigns->create('Spring', 'aud_1', [
             'text' => 'Hello {{name}}',
-            'on_missing_variable' => 'skip',
+            'onMissingVariable' => 'skip',
         ]);
         self::assertInstanceOf(Campaign::class, $c);
 
@@ -64,9 +64,9 @@ final class CampaignsResourceTest extends TestCase
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('Spring', $body['name']);
-        self::assertSame('aud_1', $body['audience_id']);
+        self::assertSame('aud_1', $body['audienceId']);
         self::assertSame('Hello {{name}}', $body['text']);
-        self::assertSame('skip', $body['on_missing_variable']);
+        self::assertSame('skip', $body['onMissingVariable']);
     }
 
     public function testList(): void
@@ -74,13 +74,13 @@ final class CampaignsResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'data' => [self::campaignFixture()],
-            'has_more' => false,
-            'next_cursor' => null,
+            'hasMore' => false,
+            'nextCursor' => null,
         ]);
 
         $page = $this->client($mock)->campaigns->list();
         self::assertCount(1, $page->data);
-        self::assertFalse($page->has_more);
+        self::assertFalse($page->hasMore);
     }
 
     public function testRetrieve(): void
@@ -101,7 +101,7 @@ final class CampaignsResourceTest extends TestCase
             'error' => [
                 'code'       => 'authentication_required',
                 'message'    => 'bad key',
-                'request_id' => 'req_x',
+                'requestId' => 'req_x',
             ],
         ]);
 

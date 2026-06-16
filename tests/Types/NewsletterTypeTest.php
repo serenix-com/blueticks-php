@@ -18,7 +18,7 @@ final class NewsletterTypeTest extends TestCase
             'name'         => 'My Channel',
             'description'  => 'Weekly updates',
             'owner'        => '15551234567@s.whatsapp.net',
-            'created_at'   => '2024-01-15T10:00:00Z',
+            'createdAt'   => '2024-01-15T10:00:00Z',
             'subscribers'  => 42,
             'invite'       => 'abc123def456',
             'verification' => 'UNVERIFIED',
@@ -32,7 +32,7 @@ final class NewsletterTypeTest extends TestCase
         self::assertSame('My Channel', $nl->name);
         self::assertSame('Weekly updates', $nl->description);
         self::assertSame('15551234567@s.whatsapp.net', $nl->owner);
-        self::assertSame('2024-01-15T10:00:00Z', $nl->created_at);
+        self::assertSame('2024-01-15T10:00:00Z', $nl->createdAt);
         self::assertSame(42, $nl->subscribers);
         self::assertSame('abc123def456', $nl->invite);
         self::assertSame('UNVERIFIED', $nl->verification);
@@ -43,14 +43,14 @@ final class NewsletterTypeTest extends TestCase
         $f = self::fixture();
         $f['description']  = null;
         $f['owner']        = null;
-        $f['created_at']   = null;
+        $f['createdAt']   = null;
         $f['subscribers']  = null;
         $f['invite']       = null;
         $f['verification'] = null;
         $nl = Newsletter::fromArray($f);
         self::assertNull($nl->description);
         self::assertNull($nl->owner);
-        self::assertNull($nl->created_at);
+        self::assertNull($nl->createdAt);
         self::assertNull($nl->subscribers);
         self::assertNull($nl->invite);
         self::assertNull($nl->verification);

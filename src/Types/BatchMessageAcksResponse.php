@@ -7,7 +7,7 @@ namespace Blueticks\Types;
 use Blueticks\Errors\ValidationError;
 
 /**
- * Response payload for `POST /v1/chats/message_acks`. The server
+ * Response payload for `POST /v1/messages/acks`. The server
  * returns one {@see BatchMessageAckEntry} row per requested message
  * key; rows whose engine state is unknown carry `ack: null`.
  */

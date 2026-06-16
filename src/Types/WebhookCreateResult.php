@@ -15,10 +15,10 @@ final class WebhookCreateResult extends Webhook
         array $events,
         ?string $description,
         string $status,
-        string $created_at,
+        string $createdAt,
         public readonly string $secret,
     ) {
-        parent::__construct($id, $url, $events, $description, $status, $created_at);
+        parent::__construct($id, $url, $events, $description, $status, $createdAt);
     }
 
     /**
@@ -31,7 +31,7 @@ final class WebhookCreateResult extends Webhook
         self::assertStringList($raw, 'events');
         self::assertStringOrNull($raw, 'description');
         self::assertString($raw, 'status');
-        self::assertString($raw, 'created_at');
+        self::assertString($raw, 'createdAt');
         self::assertString($raw, 'secret');
 
         /** @var list<string> $events */
@@ -43,7 +43,7 @@ final class WebhookCreateResult extends Webhook
             events: $events,
             description: $raw['description'],
             status: $raw['status'],
-            created_at: $raw['created_at'],
+            createdAt: $raw['createdAt'],
             secret: $raw['secret'],
         );
     }

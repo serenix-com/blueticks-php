@@ -17,7 +17,7 @@ class Webhook
         public readonly array $events,
         public readonly ?string $description,
         public readonly string $status,
-        public readonly string $created_at,
+        public readonly string $createdAt,
     ) {
     }
 
@@ -31,7 +31,7 @@ class Webhook
         self::assertStringList($raw, 'events');
         self::assertStringOrNull($raw, 'description');
         self::assertString($raw, 'status');
-        self::assertString($raw, 'created_at');
+        self::assertString($raw, 'createdAt');
 
         /** @var list<string> $events */
         $events = array_values($raw['events']);
@@ -42,7 +42,7 @@ class Webhook
             events: $events,
             description: $raw['description'],
             status: $raw['status'],
-            created_at: $raw['created_at'],
+            createdAt: $raw['createdAt'],
         );
     }
 

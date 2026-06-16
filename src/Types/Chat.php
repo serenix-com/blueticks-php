@@ -11,11 +11,11 @@ final class Chat
     public function __construct(
         public readonly string $id,
         public readonly ?string $name,
-        public readonly bool $is_group,
-        public readonly bool $is_newsletter,
-        public readonly ?string $last_message_at,
-        public readonly ?int $unread_count,
-        public readonly bool $marked_unread,
+        public readonly bool $isGroup,
+        public readonly bool $isNewsletter,
+        public readonly ?string $lastMessageAt,
+        public readonly ?int $unreadCount,
+        public readonly bool $markedUnread,
     ) {
     }
 
@@ -26,28 +26,28 @@ final class Chat
     {
         self::assertString($raw, 'id');
         self::assertStringOrNull($raw, 'name');
-        if (!array_key_exists('is_group', $raw) || !is_bool($raw['is_group'])) {
-            throw new ValidationError(message: "Missing or non-bool field 'is_group' in Chat response");
+        if (!array_key_exists('isGroup', $raw) || !is_bool($raw['isGroup'])) {
+            throw new ValidationError(message: "Missing or non-bool field 'isGroup' in Chat response");
         }
-        if (!array_key_exists('is_newsletter', $raw) || !is_bool($raw['is_newsletter'])) {
-            throw new ValidationError(message: "Missing or non-bool field 'is_newsletter' in Chat response");
+        if (!array_key_exists('isNewsletter', $raw) || !is_bool($raw['isNewsletter'])) {
+            throw new ValidationError(message: "Missing or non-bool field 'isNewsletter' in Chat response");
         }
-        self::assertStringOrNull($raw, 'last_message_at');
-        if (array_key_exists('unread_count', $raw) && $raw['unread_count'] !== null && !is_int($raw['unread_count'])) {
-            throw new ValidationError(message: "Field 'unread_count' must be int or null in Chat response");
+        self::assertStringOrNull($raw, 'lastMessageAt');
+        if (array_key_exists('unreadCount', $raw) && $raw['unreadCount'] !== null && !is_int($raw['unreadCount'])) {
+            throw new ValidationError(message: "Field 'unreadCount' must be int or null in Chat response");
         }
-        if (!array_key_exists('marked_unread', $raw) || !is_bool($raw['marked_unread'])) {
-            throw new ValidationError(message: "Missing or non-bool field 'marked_unread' in Chat response");
+        if (!array_key_exists('markedUnread', $raw) || !is_bool($raw['markedUnread'])) {
+            throw new ValidationError(message: "Missing or non-bool field 'markedUnread' in Chat response");
         }
 
         return new self(
             id: $raw['id'],
             name: $raw['name'] ?? null,
-            is_group: $raw['is_group'],
-            is_newsletter: $raw['is_newsletter'],
-            last_message_at: $raw['last_message_at'] ?? null,
-            unread_count: $raw['unread_count'] ?? null,
-            marked_unread: $raw['marked_unread'],
+            isGroup: $raw['isGroup'],
+            isNewsletter: $raw['isNewsletter'],
+            lastMessageAt: $raw['lastMessageAt'] ?? null,
+            unreadCount: $raw['unreadCount'] ?? null,
+            markedUnread: $raw['markedUnread'],
         );
     }
 

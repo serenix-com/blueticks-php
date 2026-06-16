@@ -31,15 +31,15 @@ final class PingTest extends TestCase
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
-            'account_id' => 'acct_abc123',
-            'key_prefix' => 'bt_live_xy',
+            'accountId' => 'acct_abc123',
+            'keyPrefix' => 'bt_live_xy',
             'scopes' => ['messages:read'],
         ]);
 
         $result = $this->client($mock)->ping();
 
         self::assertInstanceOf(Ping::class, $result);
-        self::assertSame('acct_abc123', $result->account_id);
+        self::assertSame('acct_abc123', $result->accountId);
         self::assertSame(['messages:read'], $result->scopes);
     }
 
@@ -50,7 +50,7 @@ final class PingTest extends TestCase
             'error' => [
                 'code' => 'authentication_required',
                 'message' => 'bad key',
-                'request_id' => 'req_xyz',
+                'requestId' => 'req_xyz',
             ],
         ]);
 

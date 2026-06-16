@@ -10,7 +10,7 @@ final class AppendContactsResult
 {
     public function __construct(
         public readonly int $added,
-        public readonly int $contact_count,
+        public readonly int $contactCount,
     ) {
     }
 
@@ -22,15 +22,15 @@ final class AppendContactsResult
         if (!array_key_exists('added', $raw) || !is_int($raw['added'])) {
             throw new ValidationError(message: "Missing or non-int field 'added' in AppendContactsResult response");
         }
-        if (!array_key_exists('contact_count', $raw) || !is_int($raw['contact_count'])) {
+        if (!array_key_exists('contactCount', $raw) || !is_int($raw['contactCount'])) {
             throw new ValidationError(
-                message: "Missing or non-int field 'contact_count' in AppendContactsResult response"
+                message: "Missing or non-int field 'contactCount' in AppendContactsResult response"
             );
         }
 
         return new self(
             added: $raw['added'],
-            contact_count: $raw['contact_count'],
+            contactCount: $raw['contactCount'],
         );
     }
 }

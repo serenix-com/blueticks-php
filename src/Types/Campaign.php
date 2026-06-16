@@ -11,18 +11,18 @@ final class Campaign
     public function __construct(
         public readonly string $id,
         public readonly string $name,
-        public readonly string $audience_id,
+        public readonly string $audienceId,
         public readonly string $status,
-        public readonly int $total_count,
-        public readonly int $sent_count,
-        public readonly int $delivered_count,
-        public readonly int $read_count,
-        public readonly int $failed_count,
+        public readonly int $totalCount,
+        public readonly int $sentCount,
+        public readonly int $deliveredCount,
+        public readonly int $readCount,
+        public readonly int $failedCount,
         public readonly ?string $from,
-        public readonly string $created_at,
-        public readonly ?string $started_at,
-        public readonly ?string $completed_at,
-        public readonly ?string $aborted_at,
+        public readonly string $createdAt,
+        public readonly ?string $startedAt,
+        public readonly ?string $completedAt,
+        public readonly ?string $abortedAt,
     ) {
     }
 
@@ -33,34 +33,34 @@ final class Campaign
     {
         self::assertString($raw, 'id');
         self::assertString($raw, 'name');
-        self::assertString($raw, 'audience_id');
+        self::assertString($raw, 'audienceId');
         self::assertString($raw, 'status');
-        self::assertInt($raw, 'total_count');
-        self::assertInt($raw, 'sent_count');
-        self::assertInt($raw, 'delivered_count');
-        self::assertInt($raw, 'read_count');
-        self::assertInt($raw, 'failed_count');
+        self::assertInt($raw, 'totalCount');
+        self::assertInt($raw, 'sentCount');
+        self::assertInt($raw, 'deliveredCount');
+        self::assertInt($raw, 'readCount');
+        self::assertInt($raw, 'failedCount');
         self::assertStringOrNull($raw, 'from');
-        self::assertString($raw, 'created_at');
-        self::assertStringOrNull($raw, 'started_at');
-        self::assertStringOrNull($raw, 'completed_at');
-        self::assertStringOrNull($raw, 'aborted_at');
+        self::assertString($raw, 'createdAt');
+        self::assertStringOrNull($raw, 'startedAt');
+        self::assertStringOrNull($raw, 'completedAt');
+        self::assertStringOrNull($raw, 'abortedAt');
 
         return new self(
             id: $raw['id'],
             name: $raw['name'],
-            audience_id: $raw['audience_id'],
+            audienceId: $raw['audienceId'],
             status: $raw['status'],
-            total_count: $raw['total_count'],
-            sent_count: $raw['sent_count'],
-            delivered_count: $raw['delivered_count'],
-            read_count: $raw['read_count'],
-            failed_count: $raw['failed_count'],
+            totalCount: $raw['totalCount'],
+            sentCount: $raw['sentCount'],
+            deliveredCount: $raw['deliveredCount'],
+            readCount: $raw['readCount'],
+            failedCount: $raw['failedCount'],
             from: $raw['from'],
-            created_at: $raw['created_at'],
-            started_at: $raw['started_at'],
-            completed_at: $raw['completed_at'],
-            aborted_at: $raw['aborted_at'],
+            createdAt: $raw['createdAt'],
+            startedAt: $raw['startedAt'],
+            completedAt: $raw['completedAt'],
+            abortedAt: $raw['abortedAt'],
         );
     }
 

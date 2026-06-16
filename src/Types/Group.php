@@ -16,9 +16,9 @@ final class Group
         public readonly ?string $name,
         public readonly ?string $description,
         public readonly ?string $owner,
-        public readonly ?string $created_at,
-        public readonly ?string $last_message_at,
-        public readonly ?int $participant_count,
+        public readonly ?string $createdAt,
+        public readonly ?string $lastMessageAt,
+        public readonly ?int $participantCount,
         public readonly ?bool $announce,
         public readonly ?bool $restrict,
         public readonly ?array $participants,
@@ -34,9 +34,9 @@ final class Group
         self::assertStringOrNull($data, 'name');
         self::assertStringOrNull($data, 'description');
         self::assertStringOrNull($data, 'owner');
-        self::assertStringOrNull($data, 'created_at');
-        self::assertStringOrNull($data, 'last_message_at');
-        self::assertIntOrNull($data, 'participant_count');
+        self::assertStringOrNull($data, 'createdAt');
+        self::assertStringOrNull($data, 'lastMessageAt');
+        self::assertIntOrNull($data, 'participantCount');
         self::assertBoolOrNull($data, 'announce');
         self::assertBoolOrNull($data, 'restrict');
 
@@ -69,11 +69,11 @@ final class Group
         /** @var ?string $owner */
         $owner = $data['owner'];
         /** @var ?string $createdAt */
-        $createdAt = $data['created_at'];
+        $createdAt = $data['createdAt'];
         /** @var ?string $lastMessageAt */
-        $lastMessageAt = $data['last_message_at'];
+        $lastMessageAt = $data['lastMessageAt'];
         /** @var ?int $participantCount */
-        $participantCount = $data['participant_count'];
+        $participantCount = $data['participantCount'];
         /** @var ?bool $announce */
         $announce = $data['announce'];
         /** @var ?bool $restrict */
@@ -84,9 +84,9 @@ final class Group
             name: $name,
             description: $description,
             owner: $owner,
-            created_at: $createdAt,
-            last_message_at: $lastMessageAt,
-            participant_count: $participantCount,
+            createdAt: $createdAt,
+            lastMessageAt: $lastMessageAt,
+            participantCount: $participantCount,
             announce: $announce,
             restrict: $restrict,
             participants: $participants,

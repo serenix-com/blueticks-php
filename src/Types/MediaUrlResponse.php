@@ -8,7 +8,7 @@ use Blueticks\Errors\ValidationError;
 
 /**
  * Response payload for
- * `GET /v1/chats/{chat_id}/messages/{key}/media_url`. The URL is null
+ * `GET /v1/messages/media_url/{waMessageKey}`. The URL is null
  * when the engine could not produce a hosted URL for the bytes.
  */
 final class MediaUrlResponse
