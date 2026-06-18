@@ -189,6 +189,42 @@ final class ChatsResource extends BaseResource
         return OkResponse::fromArray($raw);
     }
 
+    /**
+     * Pin a message to the top of its chat by its complete WhatsApp message key.
+     * $duration is the pin expiry in seconds; pass null for WhatsApp's 7-day default.
+     */
+    public function pin(string $waMessageKey, ?int $duration = null, ?string $chatId = null): OkResponse
+    {
+        $opts = [];
+        if ($duration !== null) {
+            $opts['body'] = ['duration' => $duration];
+        }
+        if ($chatId !== null) {
+            $opts['query'] = ['chatId' => $chatId];
+        }
+        $raw = $this->client->request(
+            'POST',
+            '/v1/messages/pin/' . rawurlencode($waMessageKey),
+            $opts,
+        );
+        return OkResponse::fromArray($raw);
+    }
+
+    /** Remove an existing pin from a message by its complete WhatsApp message key. */
+    public function unpin(string $waMessageKey, ?string $chatId = null): OkResponse
+    {
+        $opts = [];
+        if ($chatId !== null) {
+            $opts['query'] = ['chatId' => $chatId];
+        }
+        $raw = $this->client->request(
+            'POST',
+            '/v1/messages/unpin/' . rawurlencode($waMessageKey),
+            $opts,
+        );
+        return OkResponse::fromArray($raw);
+    }
+
     /** Ask the engine to load older messages from the phone for this chat. */
     public function loadOlderMessages(string $chatId): LoadOlderMessagesResponse
     {
