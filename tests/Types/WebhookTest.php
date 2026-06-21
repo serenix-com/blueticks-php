@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Blueticks\Tests\Types;
 
-use Blueticks\Errors\ValidationError;
 use Blueticks\Types\Webhook;
-use Blueticks\Types\WebhookCreateResult;
 use PHPUnit\Framework\TestCase;
 
 final class WebhookTest extends TestCase
@@ -41,20 +39,5 @@ final class WebhookTest extends TestCase
         $f['description'] = null;
         $w = Webhook::fromArray($f);
         self::assertNull($w->description);
-    }
-
-    public function testWebhookCreateResultIncludesSecret(): void
-    {
-        $f = self::fixture();
-        $f['secret'] = 'whsec_abc';
-        $r = WebhookCreateResult::fromArray($f);
-        self::assertSame('whsec_abc', $r->secret);
-        self::assertSame('wh_1', $r->id);
-    }
-
-    public function testMissingSecretThrows(): void
-    {
-        $this->expectException(ValidationError::class);
-        WebhookCreateResult::fromArray(self::fixture());
     }
 }

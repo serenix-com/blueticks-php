@@ -9,7 +9,6 @@ use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
 use Blueticks\Types\DeletedResource;
 use Blueticks\Types\Webhook;
-use Blueticks\Types\WebhookCreateResult;
 use PHPUnit\Framework\TestCase;
 
 final class WebhooksResourceTest extends TestCase
@@ -42,20 +41,18 @@ final class WebhooksResourceTest extends TestCase
         ];
     }
 
-    public function testCreateReturnsSecret(): void
+    public function testCreate(): void
     {
         $mock = new MockTransport();
-        $f = self::webhookFixture();
-        $f['secret'] = 'whsec_abc';
-        $mock->enqueueJson(200, $f);
+        $mock->enqueueJson(200, self::webhookFixture());
 
         $w = $this->client($mock)->webhooks->create(
             'https://example.com/webhooks',
             ['message.delivered'],
             'my hook',
         );
-        self::assertInstanceOf(WebhookCreateResult::class, $w);
-        self::assertSame('whsec_abc', $w->secret);
+        self::assertInstanceOf(Webhook::class, $w);
+        self::assertSame('wh_1', $w->id);
 
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());
@@ -152,22 +149,5 @@ final class WebhooksResourceTest extends TestCase
         $req = $mock->requests()[0];
         self::assertSame('DELETE', $req->getMethod());
         self::assertSame('https://api.blueticks.test/v1/webhooks/wh_1', (string) $req->getUri());
-    }
-
-    public function testRotateSecret(): void
-    {
-        $mock = new MockTransport();
-        $f = self::webhookFixture();
-        $f['secret'] = 'whsec_new';
-        $mock->enqueueJson(200, $f);
-
-        $r = $this->client($mock)->webhooks->rotateSecret('wh_1');
-        self::assertSame('whsec_new', $r->secret);
-        $req = $mock->requests()[0];
-        self::assertSame('POST', $req->getMethod());
-        self::assertSame(
-            'https://api.blueticks.test/v1/webhooks/wh_1/rotate-secret',
-            (string) $req->getUri(),
-        );
     }
 }

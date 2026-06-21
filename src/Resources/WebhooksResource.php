@@ -8,21 +8,20 @@ use Blueticks\BaseResource;
 use Blueticks\Types\DeletedResource;
 use Blueticks\Types\Page;
 use Blueticks\Types\Webhook;
-use Blueticks\Types\WebhookCreateResult;
 
 final class WebhooksResource extends BaseResource
 {
     /**
      * @param list<string>         $events
      */
-    public function create(string $url, array $events, ?string $description = null): WebhookCreateResult
+    public function create(string $url, array $events, ?string $description = null): Webhook
     {
         $body = ['url' => $url, 'events' => $events];
         if ($description !== null) {
             $body['description'] = $description;
         }
         $raw = $this->client->request('POST', '/v1/webhooks', ['body' => $body]);
-        return WebhookCreateResult::fromArray($raw);
+        return Webhook::fromArray($raw);
     }
 
     /**
@@ -78,11 +77,5 @@ final class WebhooksResource extends BaseResource
     {
         $raw = $this->client->request('DELETE', "/v1/webhooks/{$id}");
         return DeletedResource::fromArray($raw);
-    }
-
-    public function rotateSecret(string $id): WebhookCreateResult
-    {
-        $raw = $this->client->request('POST', "/v1/webhooks/{$id}/rotate-secret");
-        return WebhookCreateResult::fromArray($raw);
     }
 }
