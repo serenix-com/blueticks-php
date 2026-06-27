@@ -6,6 +6,7 @@ namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
 use Blueticks\Types\Newsletter;
+use Blueticks\Types\NewsletterListItem;
 use Blueticks\Types\Page;
 
 final class NewslettersResource extends BaseResource
@@ -16,7 +17,7 @@ final class NewslettersResource extends BaseResource
      * List newsletters visible to the connected WhatsApp engine. Cursor-paginated
      * via `limit` + `cursor`. Requires `newsletters:read` scope.
      *
-     * @return Page<Newsletter>
+     * @return Page<NewsletterListItem>
      */
     public function list(?int $limit = null, ?string $cursor = null): Page
     {
@@ -30,9 +31,9 @@ final class NewslettersResource extends BaseResource
 
         $data = $this->client->request('GET', '/v1/newsletters', $query !== [] ? ['query' => $query] : []);
 
-        /** @var list<Newsletter> $items */
+        /** @var list<NewsletterListItem> $items */
         $items = array_map(
-            static fn (mixed $item): Newsletter => Newsletter::fromArray((array) $item),
+            static fn (mixed $item): NewsletterListItem => NewsletterListItem::fromArray((array) $item),
             (array) $data['data'],
         );
 

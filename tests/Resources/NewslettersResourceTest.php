@@ -8,6 +8,7 @@ use Blueticks\Blueticks;
 use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
 use Blueticks\Types\Newsletter;
+use Blueticks\Types\NewsletterListItem;
 use Blueticks\Types\Page;
 use PHPUnit\Framework\TestCase;
 
@@ -31,11 +32,23 @@ final class NewslettersResourceTest extends TestCase
     private function newsletterFixture(): array
     {
         return [
-            'id'           => '120363201733549020@newsletter',
+            'newsletterId' => '120363201733549020@newsletter',
             'name'         => 'My Channel',
             'description'  => 'Weekly updates',
-            'owner'        => '15551234567@s.whatsapp.net',
-            'createdAt'   => '2024-01-15T10:00:00Z',
+            'createdAt'    => '2024-01-15T10:00:00Z',
+            'subscribers'  => 42,
+            'invite'       => 'abc123def456',
+            'verification' => 'UNVERIFIED',
+        ];
+    }
+
+    private function newsletterListFixture(): array
+    {
+        return [
+            'chatId'       => '120363201733549020@newsletter',
+            'name'         => 'My Channel',
+            'description'  => 'Weekly updates',
+            'createdAt'    => '2024-01-15T10:00:00Z',
             'subscribers'  => 42,
             'invite'       => 'abc123def456',
             'verification' => 'UNVERIFIED',
@@ -48,7 +61,7 @@ final class NewslettersResourceTest extends TestCase
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
-            'data'        => [$this->newsletterFixture()],
+            'data'        => [$this->newsletterListFixture()],
             'hasMore'    => false,
             'nextCursor' => null,
         ]);
@@ -57,8 +70,8 @@ final class NewslettersResourceTest extends TestCase
 
         self::assertInstanceOf(Page::class, $result);
         self::assertCount(1, $result->data);
-        self::assertInstanceOf(Newsletter::class, $result->data[0]);
-        self::assertSame('120363201733549020@newsletter', $result->data[0]->id);
+        self::assertInstanceOf(NewsletterListItem::class, $result->data[0]);
+        self::assertSame('120363201733549020@newsletter', $result->data[0]->chatId);
         self::assertSame('My Channel', $result->data[0]->name);
         self::assertFalse($result->hasMore);
         self::assertNull($result->nextCursor);
@@ -102,7 +115,7 @@ final class NewslettersResourceTest extends TestCase
         ]);
 
         self::assertInstanceOf(Newsletter::class, $result);
-        self::assertSame('120363201733549020@newsletter', $result->id);
+        self::assertSame('120363201733549020@newsletter', $result->newsletterId);
         self::assertSame('My Channel', $result->name);
         self::assertSame('Weekly updates', $result->description);
         self::assertSame(42, $result->subscribers);
@@ -148,7 +161,7 @@ final class NewslettersResourceTest extends TestCase
         $result = $this->client($mock)->newsletters->retrieve('120363201733549020@newsletter');
 
         self::assertInstanceOf(Newsletter::class, $result);
-        self::assertSame('120363201733549020@newsletter', $result->id);
+        self::assertSame('120363201733549020@newsletter', $result->newsletterId);
         self::assertSame('My Channel', $result->name);
 
         $req = $mock->requests()[0];
