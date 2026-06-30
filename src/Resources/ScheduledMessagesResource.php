@@ -16,13 +16,13 @@ final class ScheduledMessagesResource extends BaseResource
      * Send a message via WhatsApp. The body is a discriminated union — set the
      * `type` field to one of `text`, `media`, or `poll`.
      *
-     * @param array<string, mixed> $params Must include `type` (`text`|`media`|`poll`) and
-     *   `to`. Type-specific required fields: `text` for text; `media` (array with
+     * @param array<string, mixed> $params Must include `type` (`text`|`media`|`poll`).
+     *   Type-specific required fields: `text` for text; `media` (array with
      *   `url`) for media; `poll` (array with `question` + `options`) for poll.
      *   Optional shared fields: `sendAt`, `from`, `replyTo`.
      *   Pass `idempotencyKey` to set the Idempotency-Key header.
      */
-    public function create(array $params): Message
+    public function create(string $chatId, array $params): Message
     {
         $requestOpts = [];
         $body = $params;
@@ -34,7 +34,11 @@ final class ScheduledMessagesResource extends BaseResource
 
         $requestOpts['body'] = $body;
 
-        $raw = $this->client->request('POST', '/v1/scheduled-messages', $requestOpts);
+        $raw = $this->client->request(
+            'POST',
+            '/v1/scheduled-messages/' . rawurlencode($chatId),
+            $requestOpts,
+        );
         return Message::fromArray($raw);
     }
 

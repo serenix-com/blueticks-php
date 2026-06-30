@@ -11,7 +11,6 @@ use Blueticks\Types\ChatMedia;
 use Blueticks\Types\ChatMessage;
 use Blueticks\Types\ChatRef;
 use Blueticks\Types\LoadOlderMessagesResponse;
-use Blueticks\Types\MediaUrlResponse;
 use Blueticks\Types\Message;
 use Blueticks\Types\MessageAck;
 use Blueticks\Types\OkResponse;
@@ -248,21 +247,6 @@ final class ChatsResource extends BaseResource
             self::chatIdQuery($chatId),
         );
         return ChatMedia::fromArray($raw);
-    }
-
-    /**
-     * Get a hosted URL for the media bytes of a message.
-     *
-     * @param ?string $chatId Optional chat hint.
-     */
-    public function getMediaUrl(string $waMessageKey, ?string $chatId = null): MediaUrlResponse
-    {
-        $raw = $this->client->request(
-            'GET',
-            '/v1/messages/media_url/' . rawurlencode($waMessageKey),
-            self::chatIdQuery($chatId),
-        );
-        return MediaUrlResponse::fromArray($raw);
     }
 
     /**

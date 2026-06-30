@@ -58,9 +58,8 @@ final class ScheduledMessagesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(201, self::messageFixture());
 
-        $msg = $this->client($mock)->scheduled_messages->create([
+        $msg = $this->client($mock)->scheduled_messages->create('+15551234567', [
             'type' => 'text',
-            'to'   => '+15551234567',
             'text' => 'hello',
         ]);
 
@@ -71,13 +70,13 @@ final class ScheduledMessagesResourceTest extends TestCase
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());
         self::assertSame(
-            'https://api.blueticks.test/v1/scheduled-messages',
+            'https://api.blueticks.test/v1/scheduled-messages/%2B15551234567',
             (string) $req->getUri(),
         );
         /** @var array<string, mixed> $decoded */
         $decoded = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('text', $decoded['type']);
-        self::assertSame('+15551234567', $decoded['to']);
+        self::assertArrayNotHasKey('to', $decoded);
         self::assertSame('hello', $decoded['text']);
     }
 
@@ -93,9 +92,8 @@ final class ScheduledMessagesResourceTest extends TestCase
         ]);
 
         try {
-            $this->client($mock)->scheduled_messages->create([
+            $this->client($mock)->scheduled_messages->create('+15551234567', [
                 'type' => 'text',
-                'to'   => '+15551234567',
                 'text' => 'hello',
             ]);
             self::fail('Expected AuthenticationError');
@@ -115,9 +113,8 @@ final class ScheduledMessagesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(201, $fixture);
 
-        $msg = $this->client($mock)->scheduled_messages->create([
+        $msg = $this->client($mock)->scheduled_messages->create('+15551234567', [
             'type'  => 'media',
-            'to'    => '+15551234567',
             'media' => [
                 'url'      => 'https://cdn.example.com/receipt.pdf',
                 'kind'     => 'document',
@@ -143,9 +140,8 @@ final class ScheduledMessagesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(201, $fixture);
 
-        $msg = $this->client($mock)->scheduled_messages->create([
+        $msg = $this->client($mock)->scheduled_messages->create('+15551234567', [
             'type' => 'poll',
-            'to'   => '+15551234567',
             'poll' => [
                 'question' => 'Pizza?',
                 'options'  => ['Yes', 'No'],
@@ -162,9 +158,8 @@ final class ScheduledMessagesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, self::messageFixture());
 
-        $this->client($mock)->scheduled_messages->create([
+        $this->client($mock)->scheduled_messages->create('+15551234567', [
             'type'             => 'text',
-            'to'               => '+15551234567',
             'text'             => 'hi',
             'idempotencyKey'  => 'key_abc',
         ]);

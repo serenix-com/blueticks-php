@@ -13,7 +13,6 @@ use Blueticks\Types\ChatMedia;
 use Blueticks\Types\ChatMessage;
 use Blueticks\Types\ChatRef;
 use Blueticks\Types\LoadOlderMessagesResponse;
-use Blueticks\Types\MediaUrlResponse;
 use Blueticks\Types\Message;
 use Blueticks\Types\MessageAck;
 use Blueticks\Types\OkResponse;
@@ -321,23 +320,6 @@ final class ChatsResourceTest extends TestCase
         self::assertSame('POST', $req->getMethod());
         self::assertSame(
             'https://api.blueticks.test/v1/messages/load_older/1234%40c.us',
-            (string) $req->getUri(),
-        );
-    }
-
-    public function testGetMediaUrlReturnsMediaUrlResponse(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(200, ['url' => 'https://cdn.example.com/x.jpg']);
-
-        $r = $this->client($mock)->chats->getMediaUrl('true_1234@c.us_ABCDEF');
-
-        self::assertInstanceOf(MediaUrlResponse::class, $r);
-        self::assertSame('https://cdn.example.com/x.jpg', $r->url);
-
-        $req = $mock->requests()[0];
-        self::assertSame(
-            'https://api.blueticks.test/v1/messages/media_url/true_1234%40c.us_ABCDEF',
             (string) $req->getUri(),
         );
     }
