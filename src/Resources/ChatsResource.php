@@ -86,6 +86,20 @@ final class ChatsResource extends BaseResource
         return OkResponse::fromArray($raw);
     }
 
+    /** Archive a chat (hides it from the main chat list). */
+    public function archive(string $chatId): OkResponse
+    {
+        $raw = $this->client->request('POST', '/v1/chats/' . rawurlencode($chatId) . '/archive');
+        return OkResponse::fromArray($raw);
+    }
+
+    /** Unarchive a chat (restores it to the main chat list). */
+    public function unarchive(string $chatId): OkResponse
+    {
+        $raw = $this->client->request('POST', '/v1/chats/' . rawurlencode($chatId) . '/unarchive');
+        return OkResponse::fromArray($raw);
+    }
+
     /** Open a chat in the engine and return a reference to it. */
     public function open(string $chatId): ChatRef
     {

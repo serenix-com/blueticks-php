@@ -248,6 +248,42 @@ final class ChatsResourceTest extends TestCase
         );
     }
 
+    public function testArchiveReturnsOkResponse(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $r = $this->client($mock)->chats->archive('1234@c.us');
+
+        self::assertInstanceOf(OkResponse::class, $r);
+        self::assertTrue($r->ok);
+
+        $req = $mock->requests()[0];
+        self::assertSame('POST', $req->getMethod());
+        self::assertSame(
+            'https://api.blueticks.test/v1/chats/1234%40c.us/archive',
+            (string) $req->getUri(),
+        );
+    }
+
+    public function testUnarchiveReturnsOkResponse(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['ok' => true]);
+
+        $r = $this->client($mock)->chats->unarchive('1234@c.us');
+
+        self::assertInstanceOf(OkResponse::class, $r);
+        self::assertTrue($r->ok);
+
+        $req = $mock->requests()[0];
+        self::assertSame('POST', $req->getMethod());
+        self::assertSame(
+            'https://api.blueticks.test/v1/chats/1234%40c.us/unarchive',
+            (string) $req->getUri(),
+        );
+    }
+
     public function testOpenReturnsChatRef(): void
     {
         $mock = new MockTransport();
