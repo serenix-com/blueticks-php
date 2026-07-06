@@ -10,6 +10,7 @@ final class Participant
 {
     public function __construct(
         public readonly string $chatId,
+        public readonly ?string $name,
         public readonly bool $isAdmin,
         public readonly ?bool $isSuperAdmin,
     ) {
@@ -22,6 +23,9 @@ final class Participant
     {
         if (!array_key_exists('chatId', $raw) || !is_string($raw['chatId'])) {
             throw new ValidationError(message: "Missing or non-string field 'chatId' in Participant response");
+        }
+        if (array_key_exists('name', $raw) && $raw['name'] !== null && !is_string($raw['name'])) {
+            throw new ValidationError(message: "Field 'name' must be string or null in Participant response");
         }
         if (!array_key_exists('isAdmin', $raw) || !is_bool($raw['isAdmin'])) {
             throw new ValidationError(message: "Missing or non-bool field 'isAdmin' in Participant response");
@@ -38,6 +42,7 @@ final class Participant
 
         return new self(
             chatId: $raw['chatId'],
+            name: $raw['name'] ?? null,
             isAdmin: $raw['isAdmin'],
             isSuperAdmin: $raw['isSuperAdmin'] ?? null,
         );

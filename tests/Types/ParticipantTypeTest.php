@@ -14,12 +14,23 @@ final class ParticipantTypeTest extends TestCase
     {
         $p = Participant::fromArray([
             'chatId' => '972544325389@c.us',
+            'name' => 'Alice',
             'isAdmin' => true,
             'isSuperAdmin' => false,
         ]);
         self::assertSame('972544325389@c.us', $p->chatId);
+        self::assertSame('Alice', $p->name);
         self::assertTrue($p->isAdmin);
         self::assertFalse($p->isSuperAdmin);
+    }
+
+    public function testNameOptional(): void
+    {
+        $p = Participant::fromArray([
+            'chatId' => '972544325389@c.us',
+            'isAdmin' => true,
+        ]);
+        self::assertNull($p->name);
     }
 
     public function testIsSuperAdminOptional(): void

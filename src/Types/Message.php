@@ -8,6 +8,9 @@ use Blueticks\Errors\ValidationError;
 
 final class Message
 {
+    /**
+     * @param ?list<string> $pollOptions
+     */
     public function __construct(
         public readonly string $id,
         public readonly ?string $key,
@@ -18,6 +21,8 @@ final class Message
         public readonly ?string $mediaUrl,
         public readonly ?string $mediaKind,
         public readonly ?string $pollQuestion,
+        public readonly ?array $pollOptions,
+        public readonly ?bool $pollAllowMultiple,
         public readonly string $status,
         public readonly ?string $sendAt,
         public readonly string $createdAt,
@@ -44,6 +49,16 @@ final class Message
         self::assertStringOrNull($raw, 'mediaUrl');
         self::assertStringOrNull($raw, 'mediaKind');
         self::assertStringOrNull($raw, 'pollQuestion');
+        $pollOptions = self::readStringListOrNull($raw, 'pollOptions');
+        if (
+            array_key_exists('pollAllowMultiple', $raw)
+            && $raw['pollAllowMultiple'] !== null
+            && !is_bool($raw['pollAllowMultiple'])
+        ) {
+            throw new ValidationError(
+                message: "Field 'pollAllowMultiple' must be bool or null in Message response",
+            );
+        }
         self::assertString($raw, 'status');
         self::assertStringOrNull($raw, 'sendAt');
         self::assertString($raw, 'createdAt');
@@ -64,6 +79,8 @@ final class Message
             mediaUrl: $raw['mediaUrl'],
             mediaKind: $raw['mediaKind'],
             pollQuestion: $raw['pollQuestion'],
+            pollOptions: $pollOptions,
+            pollAllowMultiple: $raw['pollAllowMultiple'] ?? null,
             status: $raw['status'],
             sendAt: $raw['sendAt'],
             createdAt: $raw['createdAt'],
@@ -93,5 +110,27 @@ final class Message
         if ($data[$key] !== null && !is_string($data[$key])) {
             throw new ValidationError(message: "Field '{$key}' must be string or null in Message response");
         }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return ?list<string>
+     */
+    private static function readStringListOrNull(array $data, string $key): ?array
+    {
+        if (!array_key_exists($key, $data) || $data[$key] === null) {
+            return null;
+        }
+        if (!is_array($data[$key])) {
+            throw new ValidationError(message: "Field '{$key}' must be array or null in Message response");
+        }
+        $out = [];
+        foreach ($data[$key] as $item) {
+            if (!is_string($item)) {
+                throw new ValidationError(message: "Each entry of '{$key}' must be a string in Message response");
+            }
+            $out[] = $item;
+        }
+        return $out;
     }
 }

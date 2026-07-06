@@ -42,10 +42,11 @@ final class ChatsResourceTest extends TestCase
     private static function chatFixture(): array
     {
         return [
-            'id' => '1234@c.us',
+            'chatId' => '1234@c.us',
             'name' => 'Alice',
-            'isGroup' => false,
-            'isNewsletter' => false,
+            'chatType' => 'contact',
+            'pinned' => false,
+            'archived' => false,
             'lastMessageAt' => '2026-04-23T10:00:00Z',
             'unreadCount' => 3,
             'markedUnread' => false,
@@ -121,7 +122,7 @@ final class ChatsResourceTest extends TestCase
 
         self::assertInstanceOf(Chat::class, $chat);
         self::assertSame('Alice', $chat->name);
-        self::assertFalse($chat->isGroup);
+        self::assertSame('contact', $chat->chatType);
         self::assertSame(3, $chat->unreadCount);
     }
 

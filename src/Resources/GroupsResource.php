@@ -26,8 +26,12 @@ final class GroupsResource extends BaseResource
      *
      * @return Page<Group>
      */
-    public function list(?int $limit = null, ?string $cursor = null, ?string $q = null): Page
-    {
+    public function list(
+        ?int $limit = null,
+        ?string $cursor = null,
+        ?string $q = null,
+        ?bool $includeArchive = null,
+    ): Page {
         $query = [];
         if ($limit !== null) {
             $query['limit'] = $limit;
@@ -37,6 +41,9 @@ final class GroupsResource extends BaseResource
         }
         if ($q !== null) {
             $query['q'] = $q;
+        }
+        if ($includeArchive !== null) {
+            $query['includeArchive'] = $includeArchive ? 'true' : 'false';
         }
         /** @var array<string, mixed> $raw */
         $raw = $this->client->request(
@@ -78,7 +85,8 @@ final class GroupsResource extends BaseResource
      *
      * @param array<string, mixed> $opts Accepts:
      *   - name: string
-     *   - settings: array{announce?: bool, restrict?: bool}
+     *   - settings: array{announce?: bool, restrict?: bool, editInfoAdminsOnly?: bool, description?: string}
+     *     description is the group description text (1..2048 chars).
      */
     public function update(string $groupId, array $opts): Group
     {

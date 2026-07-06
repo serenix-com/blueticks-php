@@ -73,9 +73,20 @@ final class MessageTest extends TestCase
         $f = self::fixture();
         $f['type'] = 'poll';
         $f['pollQuestion'] = 'Pizza?';
+        $f['pollOptions'] = ['Yes', 'No'];
+        $f['pollAllowMultiple'] = true;
         $m = Message::fromArray($f);
         self::assertSame('poll', $m->type);
         self::assertSame('Pizza?', $m->pollQuestion);
+        self::assertSame(['Yes', 'No'], $m->pollOptions);
+        self::assertTrue($m->pollAllowMultiple);
+    }
+
+    public function testPollFieldsDefaultToNull(): void
+    {
+        $m = Message::fromArray(self::fixture());
+        self::assertNull($m->pollOptions);
+        self::assertNull($m->pollAllowMultiple);
     }
 
     public function testFromArrayRequiresId(): void

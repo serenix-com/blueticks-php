@@ -19,7 +19,7 @@ final class NewslettersResource extends BaseResource
      *
      * @return Page<NewsletterListItem>
      */
-    public function list(?int $limit = null, ?string $cursor = null): Page
+    public function list(?int $limit = null, ?string $cursor = null, ?bool $includeArchive = null): Page
     {
         $query = [];
         if ($limit !== null) {
@@ -27,6 +27,9 @@ final class NewslettersResource extends BaseResource
         }
         if ($cursor !== null) {
             $query['cursor'] = $cursor;
+        }
+        if ($includeArchive !== null) {
+            $query['includeArchive'] = $includeArchive ? 'true' : 'false';
         }
 
         $data = $this->client->request('GET', '/v1/newsletters', $query !== [] ? ['query' => $query] : []);

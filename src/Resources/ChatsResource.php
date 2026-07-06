@@ -30,8 +30,12 @@ final class ChatsResource extends BaseResource
      *
      * @return Page<Chat>
      */
-    public function list(?string $query = null, ?int $limit = null, ?string $cursor = null): Page
-    {
+    public function list(
+        ?string $query = null,
+        ?int $limit = null,
+        ?string $cursor = null,
+        ?bool $includeArchive = null,
+    ): Page {
         $q = [];
         if ($query !== null) {
             $q['query'] = $query;
@@ -41,6 +45,9 @@ final class ChatsResource extends BaseResource
         }
         if ($cursor !== null) {
             $q['cursor'] = $cursor;
+        }
+        if ($includeArchive !== null) {
+            $q['includeArchive'] = $includeArchive ? 'true' : 'false';
         }
         $raw = $this->client->request('GET', '/v1/chats', $q !== [] ? ['query' => $q] : []);
         return Page::fromArray($raw, fn (array $r): Chat => Chat::fromArray($r));
