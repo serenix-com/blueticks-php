@@ -5,47 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 4.4.0 — 2026-06-25
-
-The `/v1/newsletters` identity field was split by surface to match how the
-chats/contacts/groups list endpoints key their rows. The single
-get/create response now keys identity as `newsletterId`, while list rows
-key it as `chatId`. The stale `owner` field (absent from the current
-spec) was dropped from the newsletter DTOs.
-
-### Changed
-
-- `Blueticks\Types\Newsletter` (returned by `newsletters->retrieve()` and
-  `newsletters->create()`): identity property `id` → `newsletterId`. The
-  `owner` property was removed.
-- `newsletters->list()` now returns `Page<NewsletterListItem>` instead of
-  `Page<Newsletter>`.
-
-### Added
-
-- `Blueticks\Types\NewsletterListItem` — the list-row DTO for
-  `GET /v1/newsletters`, identical to `Newsletter` except identity is
-  keyed `chatId`.
-
-## 4.3.0 — 2026-06-18
-
-Webhook delivery signing was dropped backend-side: deliveries are no
-longer HMAC-signed, the `secret` field is gone from the webhook create
-response, and `POST /v1/webhooks/{id}/rotate-secret` was deleted. The
-webhook resource keeps CRUD only.
-
-### Removed
-
-- `Blueticks\Webhooks\verify()` helper (and its `files` autoload entry).
-- `Blueticks\Errors\WebhookVerificationError`.
-- `Blueticks\Types\WebhookCreateResult` and `Blueticks\Types\WebhookEvent`.
-- `webhooks->rotateSecret()` — the `rotate-secret` endpoint no longer exists.
-
-### Changed
-
-- `webhooks->create()` now returns `Blueticks\Types\Webhook` (no `secret`)
-  instead of the former `WebhookCreateResult`.
-
 ## 4.2.0 — 2026-05-22
 
 OpenAPI parity pass. The SDK now matches `backend/openapi.json`

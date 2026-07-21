@@ -21,10 +21,10 @@ final class Blueticks
     public readonly Resources\ContactsResource $contacts;
     public readonly Resources\EnginesResource $engines;
     public readonly Resources\GroupsResource $groups;
+    public readonly Resources\MessagesResource $messages;
     public readonly Resources\NewslettersResource $newsletters;
     public readonly Resources\ScheduledMessagesResource $scheduled_messages;
     public readonly Resources\SunoResource $suno;
-    public readonly Resources\UtilsResource $utils;
     // REGEN-BOUNDARY: resource properties end
 
     /**
@@ -70,10 +70,10 @@ final class Blueticks
         $this->contacts = new Resources\ContactsResource($this);
         $this->engines = new Resources\EnginesResource($this);
         $this->groups = new Resources\GroupsResource($this);
+        $this->messages = new Resources\MessagesResource($this);
         $this->newsletters = new Resources\NewslettersResource($this);
         $this->scheduled_messages = new Resources\ScheduledMessagesResource($this);
         $this->suno = new Resources\SunoResource($this);
-        $this->utils = new Resources\UtilsResource($this);
         // REGEN-BOUNDARY: resource attachments end
     }
 

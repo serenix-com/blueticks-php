@@ -6,8 +6,10 @@ namespace Blueticks\Types;
 
 use Blueticks\Errors\ValidationError;
 
-class Webhook
+final class Webhook
 {
+    public const STATUSES = ['enabled', 'disabled'];
+
     /**
      * @param list<string> $events
      */
@@ -22,32 +24,40 @@ class Webhook
     }
 
     /**
-     * @param array<string, mixed> $raw
+     * @param array<string, mixed> $data
      */
-    public static function fromArray(array $raw): self
+    public static function fromArray(array $data): self
     {
-        self::assertString($raw, 'id');
-        self::assertString($raw, 'url');
-        self::assertStringList($raw, 'events');
-        self::assertStringOrNull($raw, 'description');
-        self::assertString($raw, 'status');
-        self::assertString($raw, 'createdAt');
+        self::assertString($data, 'id');
+        self::assertString($data, 'url');
+        self::assertStringList($data, 'events');
+        self::assertStringOrNull($data, 'description');
+        if (
+            !array_key_exists('status', $data)
+            || !is_string($data['status'])
+            || !in_array($data['status'], self::STATUSES, true)
+        ) {
+            throw new ValidationError(
+                message: "Field 'status' must be one of " . implode('/', self::STATUSES) . " in Webhook response",
+            );
+        }
+        self::assertString($data, 'createdAt');
 
         /** @var list<string> $events */
-        $events = array_values($raw['events']);
+        $events = array_values($data['events']);
 
         return new self(
-            id: $raw['id'],
-            url: $raw['url'],
+            id: $data['id'],
+            url: $data['url'],
             events: $events,
-            description: $raw['description'],
-            status: $raw['status'],
-            createdAt: $raw['createdAt'],
+            description: $data['description'] ?? null,
+            status: $data['status'],
+            createdAt: $data['createdAt'],
         );
     }
 
     /** @param array<string, mixed> $data */
-    protected static function assertString(array $data, string $key): void
+    private static function assertString(array $data, string $key): void
     {
         if (!array_key_exists($key, $data) || !is_string($data[$key])) {
             throw new ValidationError(message: "Missing or non-string field '{$key}' in Webhook response");
@@ -55,18 +65,15 @@ class Webhook
     }
 
     /** @param array<string, mixed> $data */
-    protected static function assertStringOrNull(array $data, string $key): void
+    private static function assertStringOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in Webhook response");
-        }
-        if ($data[$key] !== null && !is_string($data[$key])) {
+        if (array_key_exists($key, $data) && $data[$key] !== null && !is_string($data[$key])) {
             throw new ValidationError(message: "Field '{$key}' must be string or null in Webhook response");
         }
     }
 
     /** @param array<string, mixed> $data */
-    protected static function assertStringList(array $data, string $key): void
+    private static function assertStringList(array $data, string $key): void
     {
         if (!array_key_exists($key, $data) || !is_array($data[$key])) {
             throw new ValidationError(message: "Missing or non-array field '{$key}' in Webhook response");

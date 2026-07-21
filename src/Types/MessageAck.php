@@ -25,16 +25,10 @@ final class MessageAck
      */
     public static function fromArray(array $data): self
     {
-        if (!array_key_exists('ack', $data)) {
-            throw new ValidationError(message: "Missing field 'ack' in MessageAck response");
-        }
-        if ($data['ack'] !== null && !is_int($data['ack'])) {
+        if (array_key_exists('ack', $data) && $data['ack'] !== null && !is_int($data['ack'])) {
             throw new ValidationError(message: "Field 'ack' must be int or null in MessageAck response");
         }
 
-        /** @var ?int $ack */
-        $ack = $data['ack'];
-
-        return new self(ack: $ack);
+        return new self(ack: $data['ack'] ?? null);
     }
 }

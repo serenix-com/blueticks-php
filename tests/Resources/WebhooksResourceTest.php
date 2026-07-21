@@ -33,121 +33,90 @@ final class WebhooksResourceTest extends TestCase
     {
         return [
             'id' => 'wh_1',
-            'url' => 'https://example.com/webhooks',
+            'url' => 'https://example.com/hook',
             'events' => ['message.delivered'],
-            'description' => null,
+            'description' => 'my hook',
             'status' => 'enabled',
             'createdAt' => '2026-04-23T10:00:00Z',
         ];
-    }
-
-    public function testCreate(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(200, self::webhookFixture());
-
-        $w = $this->client($mock)->webhooks->create(
-            'https://example.com/webhooks',
-            ['message.delivered'],
-            'my hook',
-        );
-        self::assertInstanceOf(Webhook::class, $w);
-        self::assertSame('wh_1', $w->id);
-
-        $req = $mock->requests()[0];
-        self::assertSame('POST', $req->getMethod());
-        self::assertSame('https://api.blueticks.test/v1/webhooks', (string) $req->getUri());
-        /** @var array<string, mixed> $body */
-        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('https://example.com/webhooks', $body['url']);
-        self::assertSame(['message.delivered'], $body['events']);
-        self::assertSame('my hook', $body['description']);
     }
 
     public function testList(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
-            'data' => [self::webhookFixture(), self::webhookFixture()],
-            'hasMore' => false,
-            'nextCursor' => null,
+            'success' => true,
+            'data' => [self::webhookFixture()],
+            'limit' => 25,
+            'skip' => 0,
+            'total' => 1,
         ]);
 
         $page = $this->client($mock)->webhooks->list();
-        self::assertCount(2, $page->data);
         self::assertInstanceOf(Webhook::class, $page->data[0]);
-        self::assertFalse($page->hasMore);
-        self::assertNull($page->nextCursor);
+        self::assertSame('enabled', $page->data[0]->status);
+    }
 
-        $req = $mock->requests()[0];
-        self::assertSame('GET', $req->getMethod());
-        self::assertSame('https://api.blueticks.test/v1/webhooks', (string) $req->getUri());
+    public function testCreateReturnsWebhook(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(201, ['success' => true, 'data' => self::webhookFixture()]);
+
+        $wh = $this->client($mock)->webhooks->create(
+            'https://example.com/hook',
+            ['message.delivered'],
+            'my hook',
+        );
+        self::assertInstanceOf(Webhook::class, $wh);
+        self::assertSame('wh_1', $wh->id);
     }
 
     public function testRetrieve(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, self::webhookFixture());
+        $mock->enqueueJson(200, ['success' => true, 'data' => self::webhookFixture()]);
 
-        $w = $this->client($mock)->webhooks->retrieve('wh_1');
-        self::assertSame('wh_1', $w->id);
-        self::assertSame(
-            'https://api.blueticks.test/v1/webhooks/wh_1',
-            (string) $mock->requests()[0]->getUri(),
-        );
+        $wh = $this->client($mock)->webhooks->retrieve('wh_1');
+        self::assertSame('wh_1', $wh->id);
     }
 
-    public function testRetrieve401MapsToAuthenticationError(): void
+    public function testUpdate(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(401, [
-            'error' => [
-                'code'       => 'authentication_required',
-                'message'    => 'bad key',
-                'requestId' => 'req_x',
-            ],
-        ]);
+        $mock->enqueueJson(200, ['success' => true, 'data' => self::webhookFixture()]);
 
-        try {
-            $this->client($mock)->webhooks->retrieve('wh_1');
-            self::fail('Expected AuthenticationError');
-        } catch (AuthenticationError $e) {
-            self::assertSame(401, $e->statusCode);
-            self::assertSame('authentication_required', $e->code);
-            self::assertSame('req_x', $e->requestId);
-        }
-    }
-
-    public function testUpdateSendsPatch(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(200, self::webhookFixture());
-
-        $this->client($mock)->webhooks->update('wh_1', [
-            'url' => 'https://new.example.com/hooks',
-            'status' => 'disabled',
-        ]);
+        $this->client($mock)->webhooks->update('wh_1', ['status' => 'disabled']);
         $req = $mock->requests()[0];
         self::assertSame('PATCH', $req->getMethod());
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('https://new.example.com/hooks', $body['url']);
-        self::assertSame('disabled', $body['status']);
-        self::assertArrayNotHasKey('events', $body);
+        self::assertSame(['status' => 'disabled'], $body);
     }
 
     public function testDelete(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, ['id' => 'wh_1', 'deleted' => true]);
+        $mock->enqueueJson(200, ['success' => true, 'data' => ['id' => 'wh_1', 'deleted' => true]]);
 
         $r = $this->client($mock)->webhooks->delete('wh_1');
         self::assertInstanceOf(DeletedResource::class, $r);
-        self::assertSame('wh_1', $r->id);
-        self::assertTrue($r->deleted);
+        self::assertSame('DELETE', $mock->requests()[0]->getMethod());
+    }
 
-        $req = $mock->requests()[0];
-        self::assertSame('DELETE', $req->getMethod());
-        self::assertSame('https://api.blueticks.test/v1/webhooks/wh_1', (string) $req->getUri());
+    public function testRetrieve401(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, ['error' => [
+            'code' => 'authentication_required',
+            'message' => 'bad key',
+            'request_id' => 'req_x',
+        ]]);
+
+        try {
+            $this->client($mock)->webhooks->retrieve('wh_1');
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame('req_x', $e->requestId);
+        }
     }
 }

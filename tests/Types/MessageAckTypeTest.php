@@ -12,23 +12,20 @@ final class MessageAckTypeTest extends TestCase
 {
     public function testHappyPath(): void
     {
-        $a = MessageAck::fromArray(['ack' => 3]);
-        self::assertSame(3, $a->ack);
+        self::assertSame(3, MessageAck::fromArray(['ack' => 3])->ack);
     }
 
     public function testNullAck(): void
     {
-        $a = MessageAck::fromArray(['ack' => null]);
-        self::assertNull($a->ack);
+        self::assertNull(MessageAck::fromArray(['ack' => null])->ack);
     }
 
-    public function testMissingAckThrows(): void
+    public function testAbsentAck(): void
     {
-        $this->expectException(ValidationError::class);
-        MessageAck::fromArray([]);
+        self::assertNull(MessageAck::fromArray([])->ack);
     }
 
-    public function testWrongTypeThrows(): void
+    public function testWrongScalarThrows(): void
     {
         $this->expectException(ValidationError::class);
         MessageAck::fromArray(['ack' => '3']);

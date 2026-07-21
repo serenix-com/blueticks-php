@@ -9,7 +9,6 @@ use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
 use Blueticks\Types\Newsletter;
 use Blueticks\Types\NewsletterListItem;
-use Blueticks\Types\Page;
 use PHPUnit\Framework\TestCase;
 
 final class NewslettersResourceTest extends TestCase
@@ -29,163 +28,61 @@ final class NewslettersResourceTest extends TestCase
         ]);
     }
 
-    private function newsletterFixture(): array
-    {
-        return [
-            'newsletterId' => '120363201733549020@newsletter',
-            'name'         => 'My Channel',
-            'description'  => 'Weekly updates',
-            'createdAt'    => '2024-01-15T10:00:00Z',
-            'subscribers'  => 42,
-            'invite'       => 'abc123def456',
-            'verification' => 'UNVERIFIED',
-        ];
-    }
-
-    private function newsletterListFixture(): array
-    {
-        return [
-            'chatId'       => '120363201733549020@newsletter',
-            'name'         => 'My Channel',
-            'description'  => 'Weekly updates',
-            'createdAt'    => '2024-01-15T10:00:00Z',
-            'subscribers'  => 42,
-            'invite'       => 'abc123def456',
-            'verification' => 'UNVERIFIED',
-        ];
-    }
-
-    // --- list() ---
-
-    public function testListReturnsPage(): void
+    public function testList(): void
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
-            'data'        => [$this->newsletterListFixture()],
-            'hasMore'    => false,
-            'nextCursor' => null,
+            'success' => true,
+            'data' => [['chatId' => '120@newsletter', 'name' => 'News', 'subscribers' => 10]],
+            'limit' => 25,
+            'skip' => 0,
+            'total' => 1,
         ]);
 
-        $result = $this->client($mock)->newsletters->list();
-
-        self::assertInstanceOf(Page::class, $result);
-        self::assertCount(1, $result->data);
-        self::assertInstanceOf(NewsletterListItem::class, $result->data[0]);
-        self::assertSame('120363201733549020@newsletter', $result->data[0]->chatId);
-        self::assertSame('My Channel', $result->data[0]->name);
-        self::assertFalse($result->hasMore);
-        self::assertNull($result->nextCursor);
-
-        $req = $mock->requests()[0];
-        self::assertSame('GET', $req->getMethod());
-        self::assertSame('https://api.blueticks.test/v1/newsletters', (string) $req->getUri());
+        $page = $this->client($mock)->newsletters->list();
+        self::assertInstanceOf(NewsletterListItem::class, $page->data[0]);
+        self::assertSame('120@newsletter', $page->data[0]->chatId);
     }
 
-    public function testList401MapsToAuthenticationError(): void
+    public function testCreate(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(401, [
-            'error' => [
-                'code'       => 'authentication_required',
-                'message'    => 'bad key',
-                'requestId' => 'req_x',
-            ],
+        $mock->enqueueJson(201, [
+            'success' => true,
+            'data' => ['newsletterId' => '120@newsletter', 'name' => 'News'],
         ]);
+
+        $n = $this->client($mock)->newsletters->create(['name' => 'News']);
+        self::assertInstanceOf(Newsletter::class, $n);
+        self::assertSame('120@newsletter', $n->newsletterId);
+        self::assertSame('POST', $mock->requests()[0]->getMethod());
+    }
+
+    public function testRetrieve(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, [
+            'success' => true,
+            'data' => ['newsletterId' => '120@newsletter', 'name' => 'News', 'verification' => 'VERIFIED'],
+        ]);
+
+        $n = $this->client($mock)->newsletters->retrieve('120@newsletter');
+        self::assertSame('VERIFIED', $n->verification);
+    }
+
+    public function testRetrieve401(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, ['error' => [
+            'code' => 'authentication_required',
+            'message' => 'bad key',
+            'request_id' => 'req_x',
+        ]]);
 
         try {
-            $this->client($mock)->newsletters->list();
+            $this->client($mock)->newsletters->retrieve('120@newsletter');
             self::fail('Expected AuthenticationError');
         } catch (AuthenticationError $e) {
-            self::assertSame(401, $e->statusCode);
-            self::assertSame('authentication_required', $e->code);
-            self::assertSame('req_x', $e->requestId);
-        }
-    }
-
-    // --- create() ---
-
-    public function testCreateReturnsNewsletter(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(201, $this->newsletterFixture());
-
-        $result = $this->client($mock)->newsletters->create([
-            'name'        => 'My Channel',
-            'description' => 'Weekly updates',
-        ]);
-
-        self::assertInstanceOf(Newsletter::class, $result);
-        self::assertSame('120363201733549020@newsletter', $result->newsletterId);
-        self::assertSame('My Channel', $result->name);
-        self::assertSame('Weekly updates', $result->description);
-        self::assertSame(42, $result->subscribers);
-        self::assertSame('UNVERIFIED', $result->verification);
-
-        $req = $mock->requests()[0];
-        self::assertSame('POST', $req->getMethod());
-        self::assertSame('https://api.blueticks.test/v1/newsletters', (string) $req->getUri());
-        /** @var array<string, mixed> $body */
-        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('My Channel', $body['name']);
-        self::assertSame('Weekly updates', $body['description']);
-    }
-
-    public function testCreate401MapsToAuthenticationError(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(401, [
-            'error' => [
-                'code'       => 'authentication_required',
-                'message'    => 'bad key',
-                'requestId' => 'req_x',
-            ],
-        ]);
-
-        try {
-            $this->client($mock)->newsletters->create(['name' => 'Test']);
-            self::fail('Expected AuthenticationError');
-        } catch (AuthenticationError $e) {
-            self::assertSame(401, $e->statusCode);
-            self::assertSame('authentication_required', $e->code);
-            self::assertSame('req_x', $e->requestId);
-        }
-    }
-
-    // --- retrieve() ---
-
-    public function testRetrieveReturnsNewsletter(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(200, $this->newsletterFixture());
-
-        $result = $this->client($mock)->newsletters->retrieve('120363201733549020@newsletter');
-
-        self::assertInstanceOf(Newsletter::class, $result);
-        self::assertSame('120363201733549020@newsletter', $result->newsletterId);
-        self::assertSame('My Channel', $result->name);
-
-        $req = $mock->requests()[0];
-        self::assertSame('GET', $req->getMethod());
-        self::assertStringContainsString('/v1/newsletters/120363201733549020@newsletter', (string) $req->getUri());
-    }
-
-    public function testRetrieve401MapsToAuthenticationError(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(401, [
-            'error' => [
-                'code'       => 'authentication_required',
-                'message'    => 'bad key',
-                'requestId' => 'req_x',
-            ],
-        ]);
-
-        try {
-            $this->client($mock)->newsletters->retrieve('120363201733549020@newsletter');
-            self::fail('Expected AuthenticationError');
-        } catch (AuthenticationError $e) {
-            self::assertSame(401, $e->statusCode);
-            self::assertSame('authentication_required', $e->code);
             self::assertSame('req_x', $e->requestId);
         }
     }

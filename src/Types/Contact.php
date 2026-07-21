@@ -6,51 +6,42 @@ namespace Blueticks\Types;
 
 use Blueticks\Errors\ValidationError;
 
+/**
+ * A WhatsApp contact from the connected account's address book,
+ * as returned by `GET /v1/contacts`.
+ */
 final class Contact
 {
-    /**
-     * @param array<string, string> $variables
-     */
     public function __construct(
-        public readonly string $id,
-        public readonly string $to,
-        public readonly array $variables,
-        public readonly string $addedAt,
+        public readonly string $chatId,
+        public readonly ?string $name,
+        public readonly ?bool $isBusiness,
     ) {
     }
 
     /**
-     * @param array<string, mixed> $raw
+     * @param array<string, mixed> $data
      */
-    public static function fromArray(array $raw): self
+    public static function fromArray(array $data): self
     {
-        self::assertString($raw, 'id');
-        self::assertString($raw, 'to');
-        self::assertString($raw, 'addedAt');
-        if (!array_key_exists('variables', $raw) || !is_array($raw['variables'])) {
-            throw new ValidationError(message: "Missing or non-array field 'variables' in Contact response");
+        if (!array_key_exists('chatId', $data) || !is_string($data['chatId'])) {
+            throw new ValidationError(message: "Missing or non-string field 'chatId' in Contact response");
         }
-        $variables = [];
-        foreach ($raw['variables'] as $k => $v) {
-            if (!is_string($k) || !is_string($v)) {
-                throw new ValidationError(message: "Field 'variables' in Contact response must map strings to strings");
-            }
-            $variables[$k] = $v;
+        if (array_key_exists('name', $data) && $data['name'] !== null && !is_string($data['name'])) {
+            throw new ValidationError(message: "Field 'name' must be string or null in Contact response");
+        }
+        if (
+            array_key_exists('isBusiness', $data)
+            && $data['isBusiness'] !== null
+            && !is_bool($data['isBusiness'])
+        ) {
+            throw new ValidationError(message: "Field 'isBusiness' must be bool or null in Contact response");
         }
 
         return new self(
-            id: $raw['id'],
-            to: $raw['to'],
-            variables: $variables,
-            addedAt: $raw['addedAt'],
+            chatId: $data['chatId'],
+            name: $data['name'] ?? null,
+            isBusiness: $data['isBusiness'] ?? null,
         );
-    }
-
-    /** @param array<string, mixed> $data */
-    private static function assertString(array $data, string $key): void
-    {
-        if (!array_key_exists($key, $data) || !is_string($data[$key])) {
-            throw new ValidationError(message: "Missing or non-string field '{$key}' in Contact response");
-        }
     }
 }

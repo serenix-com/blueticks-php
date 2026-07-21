@@ -6,6 +6,12 @@ namespace Blueticks\Types;
 
 use Blueticks\Errors\ValidationError;
 
+/**
+ * A WhatsApp group. List endpoints (`GET /v1/groups`,
+ * `GET /v1/contacts/{id}/common_groups`) return the lighter list-item
+ * subset (no `announce`/`participants`); single-group endpoints return
+ * the full snapshot. Every field except `id` may be absent.
+ */
 final class Group
 {
     /**
@@ -30,7 +36,9 @@ final class Group
      */
     public static function fromArray(array $data): self
     {
-        self::assertString($data, 'id');
+        if (!array_key_exists('id', $data) || !is_string($data['id'])) {
+            throw new ValidationError(message: "Missing or non-string field 'id' in Group response");
+        }
         self::assertStringOrNull($data, 'name');
         self::assertStringOrNull($data, 'description');
         self::assertStringOrNull($data, 'owner');
@@ -40,11 +48,8 @@ final class Group
         self::assertBoolOrNull($data, 'announce');
         self::assertBoolOrNull($data, 'restrict');
 
-        if (!array_key_exists('participants', $data)) {
-            throw new ValidationError(message: "Missing field 'participants' in Group response");
-        }
         $participants = null;
-        if ($data['participants'] !== null) {
+        if (array_key_exists('participants', $data) && $data['participants'] !== null) {
             if (!is_array($data['participants'])) {
                 throw new ValidationError(message: "Field 'participants' must be array or null in Group response");
             }
@@ -60,54 +65,24 @@ final class Group
             }
         }
 
-        /** @var string $id */
-        $id = $data['id'];
-        /** @var ?string $name */
-        $name = $data['name'];
-        /** @var ?string $description */
-        $description = $data['description'];
-        /** @var ?string $owner */
-        $owner = $data['owner'];
-        /** @var ?string $createdAt */
-        $createdAt = $data['createdAt'];
-        /** @var ?string $lastMessageAt */
-        $lastMessageAt = $data['lastMessageAt'];
-        /** @var ?int $participantCount */
-        $participantCount = $data['participantCount'];
-        /** @var ?bool $announce */
-        $announce = $data['announce'];
-        /** @var ?bool $restrict */
-        $restrict = $data['restrict'];
-
         return new self(
-            id: $id,
-            name: $name,
-            description: $description,
-            owner: $owner,
-            createdAt: $createdAt,
-            lastMessageAt: $lastMessageAt,
-            participantCount: $participantCount,
-            announce: $announce,
-            restrict: $restrict,
+            id: $data['id'],
+            name: $data['name'] ?? null,
+            description: $data['description'] ?? null,
+            owner: $data['owner'] ?? null,
+            createdAt: $data['createdAt'] ?? null,
+            lastMessageAt: $data['lastMessageAt'] ?? null,
+            participantCount: $data['participantCount'] ?? null,
+            announce: $data['announce'] ?? null,
+            restrict: $data['restrict'] ?? null,
             participants: $participants,
         );
     }
 
     /** @param array<string, mixed> $data */
-    private static function assertString(array $data, string $key): void
-    {
-        if (!array_key_exists($key, $data) || !is_string($data[$key])) {
-            throw new ValidationError(message: "Missing or non-string field '{$key}' in Group response");
-        }
-    }
-
-    /** @param array<string, mixed> $data */
     private static function assertStringOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in Group response");
-        }
-        if ($data[$key] !== null && !is_string($data[$key])) {
+        if (array_key_exists($key, $data) && $data[$key] !== null && !is_string($data[$key])) {
             throw new ValidationError(message: "Field '{$key}' must be string or null in Group response");
         }
     }
@@ -115,10 +90,7 @@ final class Group
     /** @param array<string, mixed> $data */
     private static function assertIntOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in Group response");
-        }
-        if ($data[$key] !== null && !is_int($data[$key])) {
+        if (array_key_exists($key, $data) && $data[$key] !== null && !is_int($data[$key])) {
             throw new ValidationError(message: "Field '{$key}' must be int or null in Group response");
         }
     }
@@ -126,10 +98,7 @@ final class Group
     /** @param array<string, mixed> $data */
     private static function assertBoolOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in Group response");
-        }
-        if ($data[$key] !== null && !is_bool($data[$key])) {
+        if (array_key_exists($key, $data) && $data[$key] !== null && !is_bool($data[$key])) {
             throw new ValidationError(message: "Field '{$key}' must be bool or null in Group response");
         }
     }

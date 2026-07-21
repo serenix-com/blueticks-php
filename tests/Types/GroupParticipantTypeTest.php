@@ -10,50 +10,32 @@ use PHPUnit\Framework\TestCase;
 
 final class GroupParticipantTypeTest extends TestCase
 {
-    public function testHappyPath(): void
+    /** @return array<string, mixed> */
+    private static function fixture(): array
     {
-        $p = GroupParticipant::fromArray([
-            'chatId' => '972544325389@c.us',
-            'isAdmin' => true,
-            'isSuperAdmin' => false,
-            'name' => 'Alice',
-        ]);
-        self::assertSame('972544325389@c.us', $p->chatId);
-        self::assertTrue($p->isAdmin);
-        self::assertFalse($p->isSuperAdmin);
-        self::assertSame('Alice', $p->name);
+        return ['chatId' => '1@c.us', 'isAdmin' => true, 'isSuperAdmin' => false, 'name' => 'Alice'];
     }
 
-    public function testNullableNameAccepted(): void
+    public function testHappyPath(): void
     {
-        $p = GroupParticipant::fromArray([
-            'chatId' => '15551234@c.us',
-            'isAdmin' => false,
-            'isSuperAdmin' => false,
-            'name' => null,
-        ]);
-        self::assertNull($p->name);
+        $p = GroupParticipant::fromArray(self::fixture());
+        self::assertSame('1@c.us', $p->chatId);
+        self::assertFalse($p->isSuperAdmin);
     }
 
     public function testMissingRequiredThrows(): void
     {
+        $f = self::fixture();
+        unset($f['isSuperAdmin']);
         $this->expectException(ValidationError::class);
-        GroupParticipant::fromArray([
-            'chatId' => 'x@c.us',
-            'isAdmin' => true,
-            'isSuperAdmin' => false,
-            // 'name' missing
-        ]);
+        GroupParticipant::fromArray($f);
     }
 
-    public function testWrongTypeIsAdminThrows(): void
+    public function testWrongScalarThrows(): void
     {
+        $f = self::fixture();
+        $f['isAdmin'] = 1;
         $this->expectException(ValidationError::class);
-        GroupParticipant::fromArray([
-            'chatId' => 'x@c.us',
-            'isAdmin' => 'yes',
-            'isSuperAdmin' => false,
-            'name' => null,
-        ]);
+        GroupParticipant::fromArray($f);
     }
 }

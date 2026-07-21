@@ -202,8 +202,8 @@ final class Transport
             $envelope = $decoded['error'];
             $code = isset($envelope['code']) && is_string($envelope['code']) ? $envelope['code'] : null;
             $message = isset($envelope['message']) && is_string($envelope['message']) ? $envelope['message'] : '';
-            $requestId = isset($envelope['requestId']) && is_string($envelope['requestId'])
-                ? $envelope['requestId']
+            $requestId = isset($envelope['request_id']) && is_string($envelope['request_id'])
+                ? $envelope['request_id']
                 : null;
         } else {
             $message = substr($raw, 0, 200);

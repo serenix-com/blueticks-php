@@ -8,8 +8,17 @@ use Blueticks\Errors\ValidationError;
 
 final class Campaign
 {
+    public const STATUSES = [
+        'pending',
+        'running',
+        'paused',
+        'complete_sent',
+        'complete_delivered',
+        'aborted',
+    ];
+
     public function __construct(
-        public readonly string $id,
+        public readonly string $cmpId,
         public readonly string $name,
         public readonly string $audienceId,
         public readonly string $status,
@@ -18,7 +27,6 @@ final class Campaign
         public readonly int $deliveredCount,
         public readonly int $readCount,
         public readonly int $failedCount,
-        public readonly ?string $from,
         public readonly string $createdAt,
         public readonly ?string $startedAt,
         public readonly ?string $completedAt,
@@ -27,40 +35,38 @@ final class Campaign
     }
 
     /**
-     * @param array<string, mixed> $raw
+     * @param array<string, mixed> $data
      */
-    public static function fromArray(array $raw): self
+    public static function fromArray(array $data): self
     {
-        self::assertString($raw, 'id');
-        self::assertString($raw, 'name');
-        self::assertString($raw, 'audienceId');
-        self::assertString($raw, 'status');
-        self::assertInt($raw, 'totalCount');
-        self::assertInt($raw, 'sentCount');
-        self::assertInt($raw, 'deliveredCount');
-        self::assertInt($raw, 'readCount');
-        self::assertInt($raw, 'failedCount');
-        self::assertStringOrNull($raw, 'from');
-        self::assertString($raw, 'createdAt');
-        self::assertStringOrNull($raw, 'startedAt');
-        self::assertStringOrNull($raw, 'completedAt');
-        self::assertStringOrNull($raw, 'abortedAt');
+        self::assertString($data, 'cmpId');
+        self::assertString($data, 'name');
+        self::assertString($data, 'audienceId');
+        self::assertEnum($data, 'status', self::STATUSES);
+        self::assertInt($data, 'totalCount');
+        self::assertInt($data, 'sentCount');
+        self::assertInt($data, 'deliveredCount');
+        self::assertInt($data, 'readCount');
+        self::assertInt($data, 'failedCount');
+        self::assertString($data, 'createdAt');
+        self::assertStringOrNull($data, 'startedAt');
+        self::assertStringOrNull($data, 'completedAt');
+        self::assertStringOrNull($data, 'abortedAt');
 
         return new self(
-            id: $raw['id'],
-            name: $raw['name'],
-            audienceId: $raw['audienceId'],
-            status: $raw['status'],
-            totalCount: $raw['totalCount'],
-            sentCount: $raw['sentCount'],
-            deliveredCount: $raw['deliveredCount'],
-            readCount: $raw['readCount'],
-            failedCount: $raw['failedCount'],
-            from: $raw['from'],
-            createdAt: $raw['createdAt'],
-            startedAt: $raw['startedAt'],
-            completedAt: $raw['completedAt'],
-            abortedAt: $raw['abortedAt'],
+            cmpId: $data['cmpId'],
+            name: $data['name'],
+            audienceId: $data['audienceId'],
+            status: $data['status'],
+            totalCount: $data['totalCount'],
+            sentCount: $data['sentCount'],
+            deliveredCount: $data['deliveredCount'],
+            readCount: $data['readCount'],
+            failedCount: $data['failedCount'],
+            createdAt: $data['createdAt'],
+            startedAt: $data['startedAt'] ?? null,
+            completedAt: $data['completedAt'] ?? null,
+            abortedAt: $data['abortedAt'] ?? null,
         );
     }
 
@@ -75,10 +81,7 @@ final class Campaign
     /** @param array<string, mixed> $data */
     private static function assertStringOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in Campaign response");
-        }
-        if ($data[$key] !== null && !is_string($data[$key])) {
+        if (array_key_exists($key, $data) && $data[$key] !== null && !is_string($data[$key])) {
             throw new ValidationError(message: "Field '{$key}' must be string or null in Campaign response");
         }
     }
@@ -88,6 +91,23 @@ final class Campaign
     {
         if (!array_key_exists($key, $data) || !is_int($data[$key])) {
             throw new ValidationError(message: "Missing or non-int field '{$key}' in Campaign response");
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param list<string>         $allowed
+     */
+    private static function assertEnum(array $data, string $key, array $allowed): void
+    {
+        if (
+            !array_key_exists($key, $data)
+            || !is_string($data[$key])
+            || !in_array($data[$key], $allowed, true)
+        ) {
+            throw new ValidationError(
+                message: "Field '{$key}' must be one of " . implode('/', $allowed) . " in Campaign response",
+            );
         }
     }
 }

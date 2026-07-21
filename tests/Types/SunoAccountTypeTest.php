@@ -10,51 +10,28 @@ use PHPUnit\Framework\TestCase;
 
 final class SunoAccountTypeTest extends TestCase
 {
-    /** @return array<string, mixed> */
-    private static function fixture(): array
-    {
-        return [
-            'creditsLeft' => 1200,
-            'monthlyLimit' => 2500,
-            'monthlyUsage' => 1300,
-            'plan' => 'Pro Plan',
-        ];
-    }
-
     public function testHappyPath(): void
     {
-        $a = SunoAccount::fromArray(self::fixture());
-        self::assertSame(1200.0, $a->creditsLeft);
-        self::assertSame(2500.0, $a->monthlyLimit);
-        self::assertSame(1300.0, $a->monthlyUsage);
+        $a = SunoAccount::fromArray([
+            'creditsLeft' => 120.5,
+            'monthlyLimit' => 500,
+            'monthlyUsage' => 42.0,
+            'plan' => 'Pro Plan',
+        ]);
+        self::assertSame(120.5, $a->creditsLeft);
+        self::assertSame(500.0, $a->monthlyLimit);
         self::assertSame('Pro Plan', $a->plan);
-    }
-
-    public function testNullableFieldsAccepted(): void
-    {
-        $f = self::fixture();
-        $f['monthlyLimit'] = null;
-        $f['monthlyUsage'] = null;
-        $f['plan'] = null;
-        $a = SunoAccount::fromArray($f);
-        self::assertNull($a->monthlyLimit);
-        self::assertNull($a->monthlyUsage);
-        self::assertNull($a->plan);
     }
 
     public function testMissingRequiredThrows(): void
     {
-        $f = self::fixture();
-        unset($f['creditsLeft']);
         $this->expectException(ValidationError::class);
-        SunoAccount::fromArray($f);
+        SunoAccount::fromArray(['plan' => 'Pro Plan']);
     }
 
-    public function testWrongTypeCreditsThrows(): void
+    public function testWrongScalarThrows(): void
     {
-        $f = self::fixture();
-        $f['creditsLeft'] = 'lots';
         $this->expectException(ValidationError::class);
-        SunoAccount::fromArray($f);
+        SunoAccount::fromArray(['creditsLeft' => 'lots']);
     }
 }

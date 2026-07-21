@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Errors\ValidationError;
 use Blueticks\Types\Group;
 use Blueticks\Types\Page;
 
@@ -18,161 +19,155 @@ use Blueticks\Types\Page;
 final class GroupsResource extends BaseResource
 {
     /**
-     * List groups.
+     * List groups. Offset-paginated via `limit` + `skip`.
      *
-     * List the groups the connected WhatsApp engine sees. Supports cursor
-     * pagination (`limit`+`cursor`) and an optional case-insensitive substring
-     * search on the group name via `q`.
-     *
+     * @param array<string, mixed> $params Accepts: searchToken, includeArchive, skip, limit.
      * @return Page<Group>
      */
-    public function list(
-        ?int $limit = null,
-        ?string $cursor = null,
-        ?string $q = null,
-        ?bool $includeArchive = null,
-    ): Page {
-        $query = [];
-        if ($limit !== null) {
-            $query['limit'] = $limit;
-        }
-        if ($cursor !== null) {
-            $query['cursor'] = $cursor;
-        }
-        if ($q !== null) {
-            $query['q'] = $q;
-        }
-        if ($includeArchive !== null) {
-            $query['includeArchive'] = $includeArchive ? 'true' : 'false';
-        }
-        /** @var array<string, mixed> $raw */
-        $raw = $this->client->request(
-            'GET',
-            '/v1/groups',
-            $query !== [] ? ['query' => $query] : [],
-        );
-        return Page::fromArray($raw, fn (array $row): Group => Group::fromArray($row));
+    public function list(array $params = []): Page
+    {
+        $query = self::pickQuery($params, ['searchToken', 'includeArchive', 'skip', 'limit']);
+        $env = $this->client->request('GET', '/v1/groups', $query !== [] ? ['query' => $query] : []);
+        return Page::fromArray($env, fn (array $row): Group => Group::fromArray($row));
     }
 
     /**
-     * Create a new group with the given name and initial participants.
+     * Create group.
      *
-     * @param list<string> $participants Each entry is a chat id (e.g. `1234@c.us`).
+     * @param list<string> $participants Each entry is a chat id (`1234@c.us`) or phone number.
      */
     public function create(string $name, array $participants): Group
     {
-        $raw = $this->client->request(
+        $env = $this->client->request(
             'POST',
             '/v1/groups',
             ['body' => ['name' => $name, 'participants' => $participants]],
         );
-        return Group::fromArray($raw);
+        return Group::fromArray(self::unwrap($env));
     }
 
     /**
      * Get group.
      *
-     * Retrieve a group by id.
+     * Retrieve a group by its id. Pass `include=participants` to embed the
+     * participant list.
+     *
+     * @param array<string, mixed> $params Accepts: include (`participants`).
      */
-    public function retrieve(string $groupId): Group
+    public function retrieve(string $groupId, array $params = []): Group
     {
-        $raw = $this->client->request('GET', '/v1/groups/' . rawurlencode($groupId));
-        return Group::fromArray($raw);
+        $query = self::pickQuery($params, ['include']);
+        $env = $this->client->request(
+            'GET',
+            '/v1/groups/' . rawurlencode($groupId),
+            $query !== [] ? ['query' => $query] : [],
+        );
+        return Group::fromArray(self::unwrap($env));
     }
 
     /**
-     * Update group metadata. Pass any subset of name and settings.
+     * Update group. Pass any subset of `name` and `settings`.
      *
-     * @param array<string, mixed> $opts Accepts:
+     * @param array<string, mixed> $params Accepts:
      *   - name: string
-     *   - settings: array{announce?: bool, restrict?: bool, editInfoAdminsOnly?: bool, description?: string}
-     *     description is the group description text (1..2048 chars).
+     *   - settings: array{announce?: bool, restrict?: bool,
+     *     editInfoAdminsOnly?: bool, description?: string}
      */
-    public function update(string $groupId, array $opts): Group
+    public function update(string $groupId, array $params): Group
     {
         $body = [];
-        if (isset($opts['name'])) {
-            $body['name'] = $opts['name'];
+        foreach (['name', 'settings'] as $k) {
+            if (array_key_exists($k, $params)) {
+                $body[$k] = $params[$k];
+            }
         }
-        if (isset($opts['settings'])) {
-            $body['settings'] = $opts['settings'];
-        }
-        $raw = $this->client->request(
+        $env = $this->client->request(
             'PATCH',
             '/v1/groups/' . rawurlencode($groupId),
             ['body' => $body],
         );
-        return Group::fromArray($raw);
+        return Group::fromArray(self::unwrap($env));
     }
 
-    /** Add a member to the group. */
+    /**
+     * Add member to group.
+     */
     public function addMember(string $groupId, string $chatId): Group
     {
-        $raw = $this->client->request(
+        $env = $this->client->request(
             'POST',
             '/v1/groups/' . rawurlencode($groupId) . '/members',
             ['body' => ['chatId' => $chatId]],
         );
-        return Group::fromArray($raw);
-    }
-
-    /** Remove a member from the group. */
-    public function removeMember(string $groupId, string $chatId): Group
-    {
-        $raw = $this->client->request(
-            'DELETE',
-            '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId),
-        );
-        return Group::fromArray($raw);
-    }
-
-    /** Promote a member to admin. */
-    public function promoteAdmin(string $groupId, string $chatId): Group
-    {
-        $raw = $this->client->request(
-            'POST',
-            '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId) . '/admin',
-        );
-        return Group::fromArray($raw);
-    }
-
-    /** Demote an admin back to a regular member. */
-    public function demoteAdmin(string $groupId, string $chatId): Group
-    {
-        $raw = $this->client->request(
-            'DELETE',
-            '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId) . '/admin',
-        );
-        return Group::fromArray($raw);
+        return Group::fromArray(self::unwrap($env));
     }
 
     /**
-     * Replace the group's profile picture.
+     * Remove member from group.
+     */
+    public function removeMember(string $groupId, string $chatId): Group
+    {
+        $env = $this->client->request(
+            'DELETE',
+            '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId),
+        );
+        return Group::fromArray(self::unwrap($env));
+    }
+
+    /**
+     * Promote member to admin.
+     */
+    public function promoteAdmin(string $groupId, string $chatId): Group
+    {
+        $env = $this->client->request(
+            'POST',
+            '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId) . '/admin',
+        );
+        return Group::fromArray(self::unwrap($env));
+    }
+
+    /**
+     * Demote admin to member.
+     */
+    public function demoteAdmin(string $groupId, string $chatId): Group
+    {
+        $env = $this->client->request(
+            'DELETE',
+            '/v1/groups/' . rawurlencode($groupId) . '/members/' . rawurlencode($chatId) . '/admin',
+        );
+        return Group::fromArray(self::unwrap($env));
+    }
+
+    /**
+     * Set group picture.
      *
-     * @param array<string, mixed> $opts Accepts:
-     *   - fileDataUrl: string (required) — base64 data URL, PNG/JPEG, ≤20 MiB
+     * @param array<string, mixed> $params Accepts:
+     *   - fileDataUrl: string — base64 data URL, PNG/JPEG, ≤20 MiB
+     *   - url: string — https URL of the image
      *   - fileName: string
      *   - fileMimeType: string
      */
-    public function setPicture(string $groupId, array $opts): Group
+    public function setPicture(string $groupId, array $params): Group
     {
         $body = [];
-        foreach (['fileDataUrl', 'fileName', 'fileMimeType'] as $k) {
-            if (array_key_exists($k, $opts)) {
-                $body[$k] = $opts[$k];
+        foreach (['fileDataUrl', 'url', 'fileName', 'fileMimeType'] as $k) {
+            if (array_key_exists($k, $params)) {
+                $body[$k] = $params[$k];
             }
         }
-        $raw = $this->client->request(
+        $env = $this->client->request(
             'PUT',
             '/v1/groups/' . rawurlencode($groupId) . '/picture',
             ['body' => $body],
         );
-        return Group::fromArray($raw);
+        return Group::fromArray(self::unwrap($env));
     }
 
     /**
-     * Leave the group as the authenticated identity. Idempotent —
-     * succeeds even if already not a member. Returns no payload.
+     * Leave group.
+     *
+     * Leave the group as the authenticated identity. Idempotent — succeeds
+     * with 204 even if already not a member. Returns no payload.
      */
     public function leave(string $groupId): void
     {
@@ -180,5 +175,41 @@ final class GroupsResource extends BaseResource
             'DELETE',
             '/v1/groups/' . rawurlencode($groupId) . '/members/me',
         );
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @param list<string>         $keys
+     * @return array<string, scalar>
+     */
+    private static function pickQuery(array $params, array $keys): array
+    {
+        $query = [];
+        foreach ($keys as $k) {
+            if (!array_key_exists($k, $params) || $params[$k] === null) {
+                continue;
+            }
+            $v = $params[$k];
+            if (is_bool($v)) {
+                $query[$k] = $v ? 'true' : 'false';
+            } elseif (is_scalar($v)) {
+                $query[$k] = $v;
+            }
+        }
+        return $query;
+    }
+
+    /**
+     * @param array<string, mixed> $env
+     * @return array<string, mixed>
+     */
+    private static function unwrap(array $env): array
+    {
+        $data = $env['data'] ?? null;
+        if (!is_array($data)) {
+            throw new ValidationError(message: 'Malformed API response: missing "data" envelope');
+        }
+        /** @var array<string, mixed> $data */
+        return $data;
     }
 }

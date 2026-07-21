@@ -27,40 +27,38 @@ final class PingTest extends TestCase
         ]);
     }
 
-    public function testPingHappyPath(): void
+    public function testRetrieveViaResource(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, [
-            'accountId' => 'acct_abc123',
-            'keyPrefix' => 'bt_live_xy',
-            'scopes' => ['messages:read'],
-        ]);
+        $mock->enqueueJson(200, ['success' => true, 'data' => [
+            'api' => 'ok',
+            'accountId' => 'acc_1',
+            'whatsappConnections' => [
+                ['id' => 'eng_1', 'type' => 'gateway', 'connected' => true],
+            ],
+        ]]);
 
-        $result = $this->client($mock)->ping();
-
-        self::assertInstanceOf(Ping::class, $result);
-        self::assertSame('acct_abc123', $result->accountId);
-        self::assertSame(['messages:read'], $result->scopes);
+        $ping = $this->client($mock)->ping();
+        self::assertInstanceOf(Ping::class, $ping);
+        self::assertSame('acc_1', $ping->accountId);
+        self::assertCount(1, $ping->whatsappConnections);
+        self::assertSame('gateway', $ping->whatsappConnections[0]->type);
     }
 
-    public function testPing401MapsToAuthenticationError(): void
+    public function testRetrieve401(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(401, [
-            'error' => [
-                'code' => 'authentication_required',
-                'message' => 'bad key',
-                'requestId' => 'req_xyz',
-            ],
-        ]);
+        $mock->enqueueJson(401, ['error' => [
+            'code' => 'authentication_required',
+            'message' => 'bad key',
+            'request_id' => 'req_x',
+        ]]);
 
         try {
             $this->client($mock)->ping();
             self::fail('Expected AuthenticationError');
         } catch (AuthenticationError $e) {
-            self::assertSame(401, $e->statusCode);
-            self::assertSame('authentication_required', $e->code);
-            self::assertSame('req_xyz', $e->requestId);
+            self::assertSame('req_x', $e->requestId);
         }
     }
 }

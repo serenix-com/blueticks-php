@@ -7,12 +7,14 @@ namespace Blueticks\Types;
 use Blueticks\Errors\ValidationError;
 
 /**
- * A newsletter row as returned by `GET /v1/newsletters`. Identical to
- * {@see Newsletter} except the identity field is keyed `chatId` (matching
- * how the chats/contacts/groups list endpoints key rows).
+ * A newsletter (channel) as returned in the `GET /v1/newsletters` list.
+ * The list identifies newsletters by their `chatId` JID; the single-item
+ * endpoints use {@see Newsletter} with `newsletterId` instead.
  */
 final class NewsletterListItem
 {
+    public const VERIFICATIONS = ['VERIFIED', 'UNVERIFIED'];
+
     public function __construct(
         public readonly string $chatId,
         public readonly string $name,
@@ -40,11 +42,11 @@ final class NewsletterListItem
         return new self(
             chatId: $data['chatId'],
             name: $data['name'],
-            description: $data['description'],
-            createdAt: $data['createdAt'],
-            subscribers: $data['subscribers'],
-            invite: $data['invite'],
-            verification: $data['verification'],
+            description: $data['description'] ?? null,
+            createdAt: $data['createdAt'] ?? null,
+            subscribers: $data['subscribers'] ?? null,
+            invite: $data['invite'] ?? null,
+            verification: $data['verification'] ?? null,
         );
     }
 
@@ -59,35 +61,31 @@ final class NewsletterListItem
     /** @param array<string, mixed> $data */
     private static function assertStringOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in NewsletterListItem response");
-        }
-        if ($data[$key] !== null && !is_string($data[$key])) {
-            throw new ValidationError(message: "Field '{$key}' must be string or null in NewsletterListItem response");
+        if (array_key_exists($key, $data) && $data[$key] !== null && !is_string($data[$key])) {
+            throw new ValidationError(
+                message: "Field '{$key}' must be string or null in NewsletterListItem response",
+            );
         }
     }
 
     /** @param array<string, mixed> $data */
     private static function assertIntOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in NewsletterListItem response");
-        }
-        if ($data[$key] !== null && !is_int($data[$key])) {
-            throw new ValidationError(message: "Field '{$key}' must be integer or null in NewsletterListItem response");
+        if (array_key_exists($key, $data) && $data[$key] !== null && !is_int($data[$key])) {
+            throw new ValidationError(message: "Field '{$key}' must be int or null in NewsletterListItem response");
         }
     }
 
     /** @param array<string, mixed> $data */
     private static function assertVerificationOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in NewsletterListItem response");
+        if (!array_key_exists($key, $data) || $data[$key] === null) {
+            return;
         }
-        if ($data[$key] !== null) {
-            if (!is_string($data[$key]) || !in_array($data[$key], ['VERIFIED', 'UNVERIFIED'], true)) {
-                throw new ValidationError(message: "Field '{$key}' must be 'VERIFIED', 'UNVERIFIED', or null in NewsletterListItem response");
-            }
+        if (!is_string($data[$key]) || !in_array($data[$key], self::VERIFICATIONS, true)) {
+            throw new ValidationError(
+                message: "Field '{$key}' must be 'VERIFIED', 'UNVERIFIED', or null in NewsletterListItem response",
+            );
         }
     }
 }

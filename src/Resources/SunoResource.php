@@ -5,92 +5,78 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Errors\ValidationError;
+use Blueticks\Types\CreateUploadResult;
+use Blueticks\Types\GenerateSongResult;
+use Blueticks\Types\SongClip;
 use Blueticks\Types\SunoAccount;
-use Blueticks\Types\SunoGeneration;
-use Blueticks\Types\SunoSong;
-use Blueticks\Types\SunoUpload;
 
 /**
- * Suno song-generation operations.
- *
- * Each method maps to a /v1/suno/* endpoint. These endpoints wrap the
- * connected Suno account: submit generations, poll clips, upload
- * reference audio, and read remaining credits.
+ * Suno music-generation operations.
  */
 final class SunoResource extends BaseResource
 {
     /**
+     * Get Suno account.
+     *
+     * Remaining credits, monthly usage, and plan on the connected Suno account.
+     */
+    public function account(): SunoAccount
+    {
+        $env = $this->client->request('GET', '/v1/suno/account');
+        return SunoAccount::fromArray(self::unwrap($env));
+    }
+
+    /**
      * Generate song.
      *
-     * Submit a song generation to Suno from `lyrics` + `style`, optionally
-     * steering `vocalGender`, `weirdness`, `styleInfluence`, and a reference
-     * recording (`uploadId` from uploadAudio, with `audioInfluence` controlling
-     * how closely the cover follows it). Returns two clip variants — poll each
-     * with getSong until `status` is `complete`. Requires `suno:write`.
+     * Submit a song generation to Suno from `lyrics` + `style`. Returns the
+     * generated clip variants — poll each by id with `getSong`.
      *
-     * @param array<string, mixed> $opts Optional fields: negativeStyle, vocalGender
-     *   (`m`|`f`), weirdness (0-1), styleInfluence (0-1), audioInfluence (0-1),
-     *   instrumental (bool), model, title, uploadId, captchaToken.
+     * @param array<string, mixed> $params Required: `lyrics`, `style`.
      */
-    public function generateSong(string $lyrics, string $style, array $opts = []): SunoGeneration
+    public function generateSong(array $params): GenerateSongResult
     {
-        $body = ['lyrics' => $lyrics, 'style' => $style];
-        foreach (
-            [
-                'negativeStyle', 'vocalGender', 'weirdness', 'styleInfluence', 'audioInfluence',
-                'instrumental', 'model', 'title', 'uploadId', 'captchaToken',
-            ] as $k
-        ) {
-            if (array_key_exists($k, $opts)) {
-                $body[$k] = $opts[$k];
-            }
-        }
-        $raw = $this->client->request('POST', '/v1/suno/songs', ['body' => $body]);
-        return SunoGeneration::fromArray($raw);
+        $env = $this->client->request('POST', '/v1/suno/songs', ['body' => $params]);
+        return GenerateSongResult::fromArray(self::unwrap($env));
     }
 
     /**
      * Get song.
      *
-     * Poll a single generated clip by id. When `status` is `complete`, `audioUrl`
-     * (MP3) and `imageUrl` are populated. Requires `suno:read`.
+     * Poll a single generated clip by id.
      */
-    public function getSong(string $id): SunoSong
+    public function getSong(string $id): SongClip
     {
-        $raw = $this->client->request('GET', '/v1/suno/songs/' . rawurlencode($id));
-        return SunoSong::fromArray($raw);
+        $env = $this->client->request('GET', '/v1/suno/songs/' . rawurlencode($id));
+        return SongClip::fromArray(self::unwrap($env));
     }
 
     /**
      * Upload reference audio.
      *
-     * Upload an audio recording (via `audioUrl` or base64 `audioBase64`) to Suno.
-     * Returns an `uploadId` to pass to generateSong as `uploadId` to
-     * cover/transform it. Max 500 MB. Requires `suno:write`.
+     * Upload an audio recording to Suno. Returns an `uploadId` to pass to
+     * `generateSong` to cover/transform it.
      *
-     * @param array<string, mixed> $opts Accepts: audioUrl, audioBase64, fileName.
+     * @param array<string, mixed> $params Accepts: audioUrl, audioBase64, fileName.
      */
-    public function uploadAudio(array $opts = []): SunoUpload
+    public function createUpload(array $params): CreateUploadResult
     {
-        $body = [];
-        foreach (['audioUrl', 'audioBase64', 'fileName'] as $k) {
-            if (array_key_exists($k, $opts)) {
-                $body[$k] = $opts[$k];
-            }
-        }
-        $raw = $this->client->request('POST', '/v1/suno/uploads', ['body' => $body]);
-        return SunoUpload::fromArray($raw);
+        $env = $this->client->request('POST', '/v1/suno/uploads', ['body' => $params]);
+        return CreateUploadResult::fromArray(self::unwrap($env));
     }
 
     /**
-     * Get Suno account.
-     *
-     * Remaining credits, monthly usage, and plan on the connected Suno account.
-     * Requires `suno:read`.
+     * @param array<string, mixed> $env
+     * @return array<string, mixed>
      */
-    public function getAccount(): SunoAccount
+    private static function unwrap(array $env): array
     {
-        $raw = $this->client->request('GET', '/v1/suno/account');
-        return SunoAccount::fromArray($raw);
+        $data = $env['data'] ?? null;
+        if (!is_array($data)) {
+            throw new ValidationError(message: 'Malformed API response: missing "data" envelope');
+        }
+        /** @var array<string, mixed> $data */
+        return $data;
     }
 }

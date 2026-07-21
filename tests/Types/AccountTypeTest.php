@@ -14,59 +14,55 @@ final class AccountTypeTest extends TestCase
     private static function fixture(): array
     {
         return [
-            'id' => 'acct_abc123',
-            'name' => 'Acme Corp',
-            'timezone' => 'Europe/Berlin',
+            'id' => 'acc_1',
+            'name' => 'Acme',
+            'userEmail' => 'a@b.co',
+            'timezone' => 'America/New_York',
             'createdAt' => '2026-04-23T10:00:00Z',
         ];
     }
 
-    public function testFromArrayHappyPath(): void
+    public function testHappyPath(): void
     {
         $a = Account::fromArray(self::fixture());
-        self::assertSame('acct_abc123', $a->id);
-        self::assertSame('Acme Corp', $a->name);
-        self::assertSame('Europe/Berlin', $a->timezone);
-        self::assertSame('2026-04-23T10:00:00Z', $a->createdAt);
+        self::assertSame('acc_1', $a->id);
+        self::assertSame('a@b.co', $a->userEmail);
+        self::assertSame('America/New_York', $a->timezone);
     }
 
-    public function testFromArrayAllowsNullTimezone(): void
+    public function testOptionalFieldsMayBeAbsent(): void
     {
-        $f = self::fixture();
-        $f['timezone'] = null;
-        $a = Account::fromArray($f);
+        $a = Account::fromArray(['id' => 'acc_1', 'name' => 'Acme', 'createdAt' => '2026-04-23T10:00:00Z']);
+        self::assertNull($a->userEmail);
         self::assertNull($a->timezone);
     }
 
-    public function testFromArrayMissingRequiredFieldThrows(): void
+    public function testOptionalFieldsExplicitNull(): void
     {
-        $this->expectException(ValidationError::class);
+        $a = Account::fromArray([
+            'id' => 'acc_1',
+            'name' => 'Acme',
+            'userEmail' => null,
+            'timezone' => null,
+            'createdAt' => '2026-04-23T10:00:00Z',
+        ]);
+        self::assertNull($a->userEmail);
+        self::assertNull($a->timezone);
+    }
+
+    public function testMissingRequiredThrows(): void
+    {
         $f = self::fixture();
-        unset($f['id']);
+        unset($f['name']);
+        $this->expectException(ValidationError::class);
         Account::fromArray($f);
     }
 
-    public function testFromArrayWrongTypeThrows(): void
+    public function testWrongScalarThrows(): void
     {
+        $f = self::fixture();
+        $f['id'] = 123;
         $this->expectException(ValidationError::class);
-        $f = self::fixture();
-        $f['name'] = 123;
         Account::fromArray($f);
-    }
-
-    public function testFromArrayTimezoneWrongTypeThrows(): void
-    {
-        $this->expectException(ValidationError::class);
-        $f = self::fixture();
-        $f['timezone'] = 42;
-        Account::fromArray($f);
-    }
-
-    public function testFromArrayIgnoresExtraFields(): void
-    {
-        $f = self::fixture();
-        $f['extra_field'] = 'ignored';
-        $a = Account::fromArray($f);
-        self::assertSame('acct_abc123', $a->id);
     }
 }

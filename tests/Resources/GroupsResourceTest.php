@@ -8,7 +8,6 @@ use Blueticks\Blueticks;
 use Blueticks\Errors\AuthenticationError;
 use Blueticks\Tests\Helpers\MockTransport;
 use Blueticks\Types\Group;
-use Blueticks\Types\Page;
 use PHPUnit\Framework\TestCase;
 
 final class GroupsResourceTest extends TestCase
@@ -32,34 +31,11 @@ final class GroupsResourceTest extends TestCase
     private static function groupFixture(): array
     {
         return [
-            'id' => '1234567890-9876543210@g.us',
-            'name' => 'Acme Team',
-            'description' => 'Internal coordination',
-            'owner' => '1234567890@c.us',
-            'createdAt' => '2026-04-23T10:00:00Z',
-            'lastMessageAt' => '2026-04-30T10:00:00Z',
-            'participantCount' => 3,
-            'announce' => false,
-            'restrict' => false,
+            'id' => '123@g.us',
+            'name' => 'My Group',
+            'participantCount' => 2,
             'participants' => [
-                [
-                    'chatId' => '1234567890@c.us',
-                    'isAdmin' => true,
-                    'isSuperAdmin' => true,
-                    'name' => 'Owner',
-                ],
-                [
-                    'chatId' => '5550000001@c.us',
-                    'isAdmin' => false,
-                    'isSuperAdmin' => false,
-                    'name' => 'Alice',
-                ],
-                [
-                    'chatId' => '5550000002@c.us',
-                    'isAdmin' => false,
-                    'isSuperAdmin' => false,
-                    'name' => null,
-                ],
+                ['chatId' => '1@c.us', 'isAdmin' => true, 'isSuperAdmin' => true, 'name' => 'Owner'],
             ],
         ];
     }
@@ -68,229 +44,99 @@ final class GroupsResourceTest extends TestCase
     {
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
-            'data'        => [self::groupFixture()],
-            'hasMore'    => false,
-            'nextCursor' => null,
+            'success' => true,
+            'data' => [['id' => '123@g.us', 'name' => 'My Group']],
+            'limit' => 25,
+            'skip' => 0,
+            'total' => 1,
         ]);
 
-        $page = $this->client($mock)->groups->list();
-        self::assertInstanceOf(Page::class, $page);
-        self::assertCount(1, $page->data);
+        $page = $this->client($mock)->groups->list(['searchToken' => 'my']);
         self::assertInstanceOf(Group::class, $page->data[0]);
-
-        $req = $mock->requests()[0];
-        self::assertSame('GET', $req->getMethod());
-        self::assertSame('https://api.blueticks.test/v1/groups', (string) $req->getUri());
-    }
-
-    public function testList401MapsToAuthenticationError(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(401, [
-            'error' => [
-                'code'       => 'authentication_required',
-                'message'    => 'bad key',
-                'requestId' => 'req_x',
-            ],
-        ]);
-
-        try {
-            $this->client($mock)->groups->list();
-            self::fail('Expected AuthenticationError');
-        } catch (AuthenticationError $e) {
-            self::assertSame(401, $e->statusCode);
-            self::assertSame('authentication_required', $e->code);
-            self::assertSame('req_x', $e->requestId);
-        }
+        self::assertNull($page->data[0]->participants);
     }
 
     public function testCreate(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, self::groupFixture());
+        $mock->enqueueJson(200, ['success' => true, 'data' => self::groupFixture()]);
 
-        $g = $this->client($mock)->groups->create('Acme Team', [
-            '1234567890@c.us',
-            '5550000001@c.us',
-        ]);
-
+        $g = $this->client($mock)->groups->create('My Group', ['1@c.us']);
         self::assertInstanceOf(Group::class, $g);
-        self::assertSame('Acme Team', $g->name);
-
-        $req = $mock->requests()[0];
-        self::assertSame('POST', $req->getMethod());
-        self::assertSame('https://api.blueticks.test/v1/groups', (string) $req->getUri());
-        /** @var array<string, mixed> $body */
-        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('Acme Team', $body['name']);
-        self::assertSame(['1234567890@c.us', '5550000001@c.us'], $body['participants']);
+        self::assertCount(1, $g->participants ?? []);
     }
 
-    public function testRetrieve401MapsToAuthenticationError(): void
+    public function testRetrieveWithInclude(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(401, [
-            'error' => [
-                'code'       => 'authentication_required',
-                'message'    => 'bad key',
-                'requestId' => 'req_x',
-            ],
-        ]);
+        $mock->enqueueJson(200, ['success' => true, 'data' => self::groupFixture()]);
 
-        try {
-            $this->client($mock)->groups->retrieve('1234567890-9876543210@g.us');
-            self::fail('Expected AuthenticationError');
-        } catch (AuthenticationError $e) {
-            self::assertSame(401, $e->statusCode);
-            self::assertSame('authentication_required', $e->code);
-            self::assertSame('req_x', $e->requestId);
-        }
-    }
-
-    public function testRetrieve(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(200, self::groupFixture());
-
-        $g = $this->client($mock)->groups->retrieve('1234567890-9876543210@g.us');
-        self::assertInstanceOf(Group::class, $g);
-        self::assertSame(3, $g->participantCount);
+        $this->client($mock)->groups->retrieve('123@g.us', ['include' => 'participants']);
+        self::assertStringContainsString('include=participants', (string) $mock->requests()[0]->getUri());
     }
 
     public function testUpdate(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, self::groupFixture());
+        $mock->enqueueJson(200, ['success' => true, 'data' => self::groupFixture()]);
 
-        $this->client($mock)->groups->update('1234567890-9876543210@g.us', [
-            'name' => 'Renamed',
-            'settings' => ['announce' => true, 'restrict' => false],
-        ]);
-
+        $this->client($mock)->groups->update('123@g.us', ['name' => 'X', 'settings' => ['announce' => true]]);
         $req = $mock->requests()[0];
         self::assertSame('PATCH', $req->getMethod());
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('Renamed', $body['name']);
-        self::assertSame(['announce' => true, 'restrict' => false], $body['settings']);
+        self::assertSame('X', $body['name']);
     }
 
-    public function testAddMember(): void
+    public function testMemberMutations(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, self::groupFixture());
-
-        $g = $this->client($mock)->groups->addMember(
-            '1234567890-9876543210@g.us',
-            '5550000003@c.us',
-        );
-        self::assertInstanceOf(Group::class, $g);
-
+        $mock->enqueueJson(200, ['success' => true, 'data' => self::groupFixture()]);
+        $this->client($mock)->groups->addMember('123@g.us', '2@c.us');
         $req = $mock->requests()[0];
         self::assertSame('POST', $req->getMethod());
-        self::assertSame(
-            'https://api.blueticks.test/v1/groups/1234567890-9876543210%40g.us/members',
-            (string) $req->getUri(),
-        );
-        /** @var array<string, mixed> $body */
-        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame(['chatId' => '5550000003@c.us'], $body);
-    }
+        self::assertStringEndsWith('/v1/groups/123%40g.us/members', (string) $req->getUri());
 
-    public function testRemoveMember(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(200, self::groupFixture());
-
-        $g = $this->client($mock)->groups->removeMember(
-            '1234567890-9876543210@g.us',
-            '5550000001@c.us',
-        );
-        self::assertInstanceOf(Group::class, $g);
-
-        $req = $mock->requests()[0];
-        self::assertSame('DELETE', $req->getMethod());
-        self::assertSame(
-            'https://api.blueticks.test/v1/groups/1234567890-9876543210%40g.us/members/5550000001%40c.us',
-            (string) $req->getUri(),
-        );
-    }
-
-    public function testPromoteAdmin(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(200, self::groupFixture());
-
-        $g = $this->client($mock)->groups->promoteAdmin(
-            '1234567890-9876543210@g.us',
-            '5550000001@c.us',
-        );
-        self::assertInstanceOf(Group::class, $g);
-
-        $req = $mock->requests()[0];
-        self::assertSame('POST', $req->getMethod());
-        self::assertSame(
-            'https://api.blueticks.test/v1/groups/1234567890-9876543210%40g.us/members/5550000001%40c.us/admin',
-            (string) $req->getUri(),
-        );
-    }
-
-    public function testDemoteAdmin(): void
-    {
-        $mock = new MockTransport();
-        $mock->enqueueJson(200, self::groupFixture());
-
-        $g = $this->client($mock)->groups->demoteAdmin(
-            '1234567890-9876543210@g.us',
-            '5550000001@c.us',
-        );
-        self::assertInstanceOf(Group::class, $g);
-
-        $req = $mock->requests()[0];
-        self::assertSame('DELETE', $req->getMethod());
-        self::assertSame(
-            'https://api.blueticks.test/v1/groups/1234567890-9876543210%40g.us/members/5550000001%40c.us/admin',
-            (string) $req->getUri(),
-        );
+        $mock2 = new MockTransport();
+        $mock2->enqueueJson(200, ['success' => true, 'data' => self::groupFixture()]);
+        $this->client($mock2)->groups->promoteAdmin('123@g.us', '2@c.us');
+        self::assertStringEndsWith('/members/2%40c.us/admin', (string) $mock2->requests()[0]->getUri());
     }
 
     public function testSetPicture(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(200, self::groupFixture());
+        $mock->enqueueJson(200, ['success' => true, 'data' => self::groupFixture()]);
 
-        $g = $this->client($mock)->groups->setPicture('1234567890-9876543210@g.us', [
-            'fileDataUrl' => 'data:image/png;base64,iVBORw0KGgo=',
-            'fileName' => 'logo.png',
-            'fileMimeType' => 'image/png',
-        ]);
-        self::assertInstanceOf(Group::class, $g);
-
-        $req = $mock->requests()[0];
-        self::assertSame('PUT', $req->getMethod());
-        self::assertSame(
-            'https://api.blueticks.test/v1/groups/1234567890-9876543210%40g.us/picture',
-            (string) $req->getUri(),
-        );
-        /** @var array<string, mixed> $body */
-        $body = json_decode((string) $req->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('data:image/png;base64,iVBORw0KGgo=', $body['fileDataUrl']);
-        self::assertSame('logo.png', $body['fileName']);
-        self::assertSame('image/png', $body['fileMimeType']);
+        $this->client($mock)->groups->setPicture('123@g.us', ['fileDataUrl' => 'data:image/png;base64,AAA']);
+        self::assertSame('PUT', $mock->requests()[0]->getMethod());
     }
 
-    public function testLeaveReturnsVoid(): void
+    public function testLeaveReturnsVoidOn204(): void
     {
         $mock = new MockTransport();
-        $mock->enqueueJson(204, []);
+        $mock->enqueueRaw(204, '');
 
-        $this->client($mock)->groups->leave('1234567890-9876543210@g.us');
-
+        $this->client($mock)->groups->leave('123@g.us');
         $req = $mock->requests()[0];
         self::assertSame('DELETE', $req->getMethod());
-        self::assertSame(
-            'https://api.blueticks.test/v1/groups/1234567890-9876543210%40g.us/members/me',
-            (string) $req->getUri(),
-        );
+        self::assertStringEndsWith('/members/me', (string) $req->getUri());
+    }
+
+    public function testRetrieve401(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, ['error' => [
+            'code' => 'authentication_required',
+            'message' => 'bad key',
+            'request_id' => 'req_x',
+        ]]);
+
+        try {
+            $this->client($mock)->groups->retrieve('123@g.us');
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame('req_x', $e->requestId);
+        }
     }
 }

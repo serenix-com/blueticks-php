@@ -21,7 +21,8 @@
         "squizlabs/php_codesniffer": "^3.10"
     },
     "autoload": {
-        "psr-4": { "Blueticks\\": "src/" }
+        "psr-4": { "Blueticks\\": "src/" },
+        "files": ["src/Webhooks/functions.php"]
     },
     "autoload-dev": {
         "psr-4": { "Blueticks\\Tests\\": "tests/" }

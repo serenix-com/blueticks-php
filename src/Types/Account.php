@@ -11,6 +11,7 @@ final class Account
     public function __construct(
         public readonly string $id,
         public readonly string $name,
+        public readonly ?string $userEmail,
         public readonly ?string $timezone,
         public readonly string $createdAt,
     ) {
@@ -23,13 +24,15 @@ final class Account
     {
         self::assertString($data, 'id');
         self::assertString($data, 'name');
+        self::assertStringOrNull($data, 'userEmail');
         self::assertStringOrNull($data, 'timezone');
         self::assertString($data, 'createdAt');
 
         return new self(
             id: $data['id'],
             name: $data['name'],
-            timezone: $data['timezone'],
+            userEmail: $data['userEmail'] ?? null,
+            timezone: $data['timezone'] ?? null,
             createdAt: $data['createdAt'],
         );
     }
@@ -45,10 +48,7 @@ final class Account
     /** @param array<string, mixed> $data */
     private static function assertStringOrNull(array $data, string $key): void
     {
-        if (!array_key_exists($key, $data)) {
-            throw new ValidationError(message: "Missing field '{$key}' in Account response");
-        }
-        if ($data[$key] !== null && !is_string($data[$key])) {
+        if (array_key_exists($key, $data) && $data[$key] !== null && !is_string($data[$key])) {
             throw new ValidationError(message: "Field '{$key}' must be string or null in Account response");
         }
     }

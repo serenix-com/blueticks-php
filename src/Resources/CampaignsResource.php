@@ -5,76 +5,108 @@ declare(strict_types=1);
 namespace Blueticks\Resources;
 
 use Blueticks\BaseResource;
+use Blueticks\Errors\ValidationError;
 use Blueticks\Types\Campaign;
 use Blueticks\Types\Page;
 
 final class CampaignsResource extends BaseResource
 {
     /**
-     * @param array<string, mixed> $opts
-     *   Accepts: text, mediaUrl, mediaCaption, from, onMissingVariable
+     * List campaigns, newest first. Offset-paginated via `limit` + `skip`.
+     *
+     * @param array<string, mixed> $params Accepts: limit, skip, order (`asc`|`desc`).
+     * @return Page<Campaign>
      */
-    public function create(string $name, string $audienceId, array $opts = []): Campaign
+    public function list(array $params = []): Page
     {
-        $body = ['name' => $name, 'audienceId' => $audienceId];
-        foreach (['text', 'mediaUrl', 'mediaCaption', 'from', 'onMissingVariable'] as $k) {
-            if (array_key_exists($k, $opts)) {
-                $body[$k] = $opts[$k];
-            }
-        }
-        $raw = $this->client->request('POST', '/v1/campaigns', ['body' => $body]);
-        return Campaign::fromArray($raw);
+        $query = self::pickQuery($params, ['limit', 'skip', 'order']);
+        $env = $this->client->request('GET', '/v1/campaigns', $query !== [] ? ['query' => $query] : []);
+        return Page::fromArray($env, fn (array $row): Campaign => Campaign::fromArray($row));
     }
 
     /**
-     * List campaigns, newest first. Cursor-paginated.
+     * Create campaign.
      *
-     * @return Page<Campaign>
+     * @param array<string, mixed> $params
+     *   Accepts: text, mediaUrl, mediaCaption, onMissingVariable (`fail`|`skip`).
      */
-    public function list(?int $limit = null, ?string $cursor = null): Page
+    public function create(string $name, string $audienceId, array $params = []): Campaign
     {
-        $query = [];
-        if ($limit !== null) {
-            $query['limit'] = $limit;
+        $body = ['name' => $name, 'audienceId' => $audienceId];
+        foreach (['text', 'mediaUrl', 'mediaCaption', 'onMissingVariable'] as $k) {
+            if (array_key_exists($k, $params)) {
+                $body[$k] = $params[$k];
+            }
         }
-        if ($cursor !== null) {
-            $query['cursor'] = $cursor;
-        }
-        /** @var array<string, mixed> $raw */
-        $raw = $this->client->request(
-            'GET',
-            '/v1/campaigns',
-            $query !== [] ? ['query' => $query] : [],
-        );
-        return Page::fromArray($raw, fn (array $row): Campaign => Campaign::fromArray($row));
+        $env = $this->client->request('POST', '/v1/campaigns', ['body' => $body]);
+        return Campaign::fromArray(self::unwrap($env));
     }
 
     /**
      * Get campaign.
      *
-     * Retrieve a campaign by ID.
+     * Retrieve a campaign by id.
      */
     public function retrieve(string $id): Campaign
     {
-        $raw = $this->client->request('GET', "/v1/campaigns/{$id}");
-        return Campaign::fromArray($raw);
+        $env = $this->client->request('GET', '/v1/campaigns/' . rawurlencode($id));
+        return Campaign::fromArray(self::unwrap($env));
     }
 
+    /**
+     * Pause campaign.
+     */
     public function pause(string $id): Campaign
     {
-        $raw = $this->client->request('POST', "/v1/campaigns/{$id}/pause");
-        return Campaign::fromArray($raw);
+        $env = $this->client->request('POST', '/v1/campaigns/' . rawurlencode($id) . '/pause');
+        return Campaign::fromArray(self::unwrap($env));
     }
 
+    /**
+     * Resume campaign.
+     */
     public function resume(string $id): Campaign
     {
-        $raw = $this->client->request('POST', "/v1/campaigns/{$id}/resume");
-        return Campaign::fromArray($raw);
+        $env = $this->client->request('POST', '/v1/campaigns/' . rawurlencode($id) . '/resume');
+        return Campaign::fromArray(self::unwrap($env));
     }
 
+    /**
+     * Cancel campaign.
+     */
     public function cancel(string $id): Campaign
     {
-        $raw = $this->client->request('POST', "/v1/campaigns/{$id}/cancel");
-        return Campaign::fromArray($raw);
+        $env = $this->client->request('POST', '/v1/campaigns/' . rawurlencode($id) . '/cancel');
+        return Campaign::fromArray(self::unwrap($env));
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @param list<string>         $keys
+     * @return array<string, scalar>
+     */
+    private static function pickQuery(array $params, array $keys): array
+    {
+        $query = [];
+        foreach ($keys as $k) {
+            if (array_key_exists($k, $params) && $params[$k] !== null && is_scalar($params[$k])) {
+                $query[$k] = $params[$k];
+            }
+        }
+        return $query;
+    }
+
+    /**
+     * @param array<string, mixed> $env
+     * @return array<string, mixed>
+     */
+    private static function unwrap(array $env): array
+    {
+        $data = $env['data'] ?? null;
+        if (!is_array($data)) {
+            throw new ValidationError(message: 'Malformed API response: missing "data" envelope');
+        }
+        /** @var array<string, mixed> $data */
+        return $data;
     }
 }

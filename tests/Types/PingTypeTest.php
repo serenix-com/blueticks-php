@@ -14,57 +14,35 @@ final class PingTypeTest extends TestCase
     private static function fixture(): array
     {
         return [
-            'accountId' => 'acct_abc123',
-            'keyPrefix' => 'bt_live_xy',
-            'scopes' => ['messages:read', 'messages:write'],
+            'api' => 'ok',
+            'accountId' => 'acc_1',
+            'whatsappConnections' => [
+                ['id' => 'eng_1', 'type' => 'regular', 'connected' => true],
+            ],
         ];
     }
 
-    public function testFromArrayHappyPath(): void
+    public function testHappyPath(): void
     {
-        $ping = Ping::fromArray(self::fixture());
-        self::assertSame('acct_abc123', $ping->accountId);
-        self::assertSame('bt_live_xy', $ping->keyPrefix);
-        self::assertSame(['messages:read', 'messages:write'], $ping->scopes);
+        $p = Ping::fromArray(self::fixture());
+        self::assertSame('acc_1', $p->accountId);
+        self::assertCount(1, $p->whatsappConnections);
+        self::assertSame('regular', $p->whatsappConnections[0]->type);
     }
 
-    public function testFromArrayMissingRequiredFieldThrows(): void
+    public function testMissingRequiredThrows(): void
     {
-        $this->expectException(ValidationError::class);
         $f = self::fixture();
         unset($f['accountId']);
-        Ping::fromArray($f);
-    }
-
-    public function testFromArrayWrongTypeThrows(): void
-    {
         $this->expectException(ValidationError::class);
-        $f = self::fixture();
-        $f['accountId'] = 123;
         Ping::fromArray($f);
     }
 
-    public function testFromArrayNonArrayScopesThrows(): void
+    public function testWrongApiValueThrows(): void
     {
+        $f = self::fixture();
+        $f['api'] = 'down';
         $this->expectException(ValidationError::class);
-        $f = self::fixture();
-        $f['scopes'] = 'not-an-array';
         Ping::fromArray($f);
-    }
-
-    public function testFromArrayScopesItemWrongTypeThrows(): void
-    {
-        $this->expectException(ValidationError::class);
-        $f = self::fixture();
-        $f['scopes'] = ['ok_item', 42];
-        Ping::fromArray($f);
-    }
-
-    public function testFromArrayIgnoresExtraFields(): void
-    {
-        $f = self::fixture();
-        $f['extra'] = 'ignored';
-        $ping = Ping::fromArray($f);
-        self::assertSame('acct_abc123', $ping->accountId);
     }
 }

@@ -6,6 +6,10 @@ namespace Blueticks\Types;
 
 use Blueticks\Errors\ValidationError;
 
+/**
+ * Media bytes (or hosted URL) for a message, returned by
+ * `GET /v1/messages/media/{waMessageKey}`.
+ */
 final class ChatMedia
 {
     public const MEDIA_UNAVAILABLE_REASONS = ['expired', 'fetching', 'awaiting_sender', 'error', 'no_media'];
@@ -15,57 +19,49 @@ final class ChatMedia
         public readonly ?string $mimetype,
         public readonly ?string $filename,
         public readonly ?string $dataBase64,
-        /** false when WA returned a preview JPEG instead of the original
-         *  (#113 — own-sent newsletter media only). null/absent when the
-         *  bytes are the genuine original from the sender. */
         public readonly ?bool $originalQuality,
-        /** Reason the bytes couldn't be retrieved. One of
-         *  {@see ChatMedia::MEDIA_UNAVAILABLE_REASONS}. null/absent on
-         *  success. */
         public readonly ?string $mediaUnavailable,
     ) {
     }
 
     /**
-     * @param array<string, mixed> $raw
+     * @param array<string, mixed> $data
      */
-    public static function fromArray(array $raw): self
+    public static function fromArray(array $data): self
     {
-        self::assertStringOrNull($raw, 'url');
-        self::assertStringOrNull($raw, 'mimetype');
-        self::assertStringOrNull($raw, 'filename');
-        self::assertStringOrNull($raw, 'dataBase64');
+        self::assertStringOrNull($data, 'url');
+        self::assertStringOrNull($data, 'mimetype');
+        self::assertStringOrNull($data, 'filename');
+        self::assertStringOrNull($data, 'dataBase64');
         if (
-            array_key_exists('originalQuality', $raw)
-            && $raw['originalQuality'] !== null
-            && !is_bool($raw['originalQuality'])
+            array_key_exists('originalQuality', $data)
+            && $data['originalQuality'] !== null
+            && !is_bool($data['originalQuality'])
         ) {
             throw new ValidationError(
                 message: "Field 'originalQuality' must be bool or null in ChatMedia response",
             );
         }
-        if (array_key_exists('mediaUnavailable', $raw) && $raw['mediaUnavailable'] !== null) {
-            if (!is_string($raw['mediaUnavailable'])) {
-                throw new ValidationError(
-                    message: "Field 'mediaUnavailable' must be string or null in ChatMedia response",
-                );
-            }
-            if (!in_array($raw['mediaUnavailable'], self::MEDIA_UNAVAILABLE_REASONS, true)) {
+        if (array_key_exists('mediaUnavailable', $data) && $data['mediaUnavailable'] !== null) {
+            if (
+                !is_string($data['mediaUnavailable'])
+                || !in_array($data['mediaUnavailable'], self::MEDIA_UNAVAILABLE_REASONS, true)
+            ) {
                 throw new ValidationError(
                     message: "Field 'mediaUnavailable' must be one of "
                         . implode('/', self::MEDIA_UNAVAILABLE_REASONS)
-                        . " in ChatMedia response",
+                        . " or null in ChatMedia response",
                 );
             }
         }
 
         return new self(
-            url: $raw['url'] ?? null,
-            mimetype: $raw['mimetype'] ?? null,
-            filename: $raw['filename'] ?? null,
-            dataBase64: $raw['dataBase64'] ?? null,
-            originalQuality: $raw['originalQuality'] ?? null,
-            mediaUnavailable: $raw['mediaUnavailable'] ?? null,
+            url: $data['url'] ?? null,
+            mimetype: $data['mimetype'] ?? null,
+            filename: $data['filename'] ?? null,
+            dataBase64: $data['dataBase64'] ?? null,
+            originalQuality: $data['originalQuality'] ?? null,
+            mediaUnavailable: $data['mediaUnavailable'] ?? null,
         );
     }
 

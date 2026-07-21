@@ -7,29 +7,30 @@ namespace Blueticks\Types;
 use Blueticks\Errors\ValidationError;
 
 /**
- * Cursor-paginated list envelope returned by every v1 list endpoint.
+ * Offset-paginated list envelope returned by every v1 list endpoint.
  *
- * Iterate `data` for the current page; pass `nextCursor` back as the
- * `cursor` argument of the next `list()` call to continue. When
- * `hasMore` is false, `nextCursor` is null and iteration is complete.
+ * Iterate `data` for the current page. Advance by adding `limit` to
+ * `skip` on the next `list()` call; iteration is complete once
+ * `skip + count(data) >= total`.
  *
  * @template T of object
  */
 final class Page
 {
     /**
-     * @param list<T>      $data
+     * @param list<T> $data
      */
     public function __construct(
         public readonly array $data,
-        public readonly bool $hasMore,
-        public readonly ?string $nextCursor,
+        public readonly int $limit,
+        public readonly int $skip,
+        public readonly int $total,
     ) {
     }
 
     /**
      * @template  U of object
-     * @param    array<string, mixed>      $raw
+     * @param    array<string, mixed>              $raw
      * @param    callable(array<string, mixed>): U $mapItem
      * @return   self<U>
      */
@@ -38,12 +39,14 @@ final class Page
         if (!is_array($raw['data'] ?? null)) {
             throw new ValidationError(message: "Expected 'data' to be an array on paginated response");
         }
-        if (!is_bool($raw['hasMore'] ?? null)) {
-            throw new ValidationError(message: "Expected 'hasMore' to be a boolean on paginated response");
+        if (!is_int($raw['limit'] ?? null)) {
+            throw new ValidationError(message: "Expected 'limit' to be an integer on paginated response");
         }
-        $nextCursor = $raw['nextCursor'] ?? null;
-        if ($nextCursor !== null && !is_string($nextCursor)) {
-            throw new ValidationError(message: "Expected 'nextCursor' to be a string or null on paginated response");
+        if (!is_int($raw['skip'] ?? null)) {
+            throw new ValidationError(message: "Expected 'skip' to be an integer on paginated response");
+        }
+        if (!is_int($raw['total'] ?? null)) {
+            throw new ValidationError(message: "Expected 'total' to be an integer on paginated response");
         }
 
         $items = [];
@@ -55,6 +58,6 @@ final class Page
             $items[] = $mapItem($row);
         }
 
-        return new self($items, $raw['hasMore'], $nextCursor);
+        return new self($items, $raw['limit'], $raw['skip'], $raw['total']);
     }
 }
