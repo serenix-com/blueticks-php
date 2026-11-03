@@ -107,4 +107,15 @@ final class ChatsResourceTest extends TestCase
             self::assertSame('req_x', $e->requestId);
         }
     }
+
+    public function testListSendsKindsAndSince(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [], 'limit' => 50, 'skip' => 0, 'total' => 0]);
+
+        $this->client($mock)->chats->list(['kinds' => ['contact', 'group'], 'since' => '2026-11-01T00:00:00+02:00']);
+        $uri = (string) $mock->requests()[0]->getUri();
+        self::assertStringContainsString('kinds=contact%2Cgroup', $uri);
+        self::assertStringContainsString('since=2026-11-01T00%3A00%3A00%2B02%3A00', $uri);
+    }
 }

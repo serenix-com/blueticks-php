@@ -141,12 +141,66 @@ final class MessagesResourceTest extends TestCase
         $mock = new MockTransport();
         $mock->enqueueJson(200, [
             'success' => true,
-            'data' => ['added' => 5, 'canLoadMore' => true, 'historyUnavailable' => false],
+            'data' => [
+                'added' => 5,
+                'canLoadMore' => true,
+                'historyUnavailable' => false,
+                'pagesExecuted' => 1,
+                'coverage' => ['oldestLoadedTimestamp' => 1700000000000, 'oldestLoadedIso' => '2023-11-14T22:13:20Z'],
+            ],
         ]);
 
         $r = $this->client($mock)->messages->loadOlder('1@c.us');
         self::assertInstanceOf(LoadOlderResult::class, $r);
         self::assertSame(5, $r->added);
+        self::assertSame(1, $r->pagesExecuted);
+        self::assertSame('2023-11-14T22:13:20Z', $r->coverage->oldestLoadedIso);
+        self::assertSame('', (string) $mock->requests()[0]->getBody());
+    }
+
+    public function testLoadOlderWithPagesAndUntilDate(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, [
+            'success' => true,
+            'data' => [
+                'canLoadMore' => false,
+                'historyUnavailable' => false,
+                'pagesExecuted' => 3,
+                'coverage' => [],
+            ],
+        ]);
+
+        $r = $this->client($mock)->messages->loadOlder('1@c.us', ['pages' => 3, 'until_date' => '2025-01-01']);
+        self::assertSame(3, $r->pagesExecuted);
+        self::assertNull($r->coverage->oldestLoadedTimestamp);
+        self::assertSame('{"pages":3,"until_date":"2025-01-01"}', (string) $mock->requests()[0]->getBody());
+    }
+
+    public function testListSendsNewFilters(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, [
+            'success' => true,
+            'data' => [],
+            'limit' => 25,
+            'skip' => 0,
+            'total' => 0,
+        ]);
+
+        $this->client($mock)->messages->list([
+            'queryAny' => ['invoice', 'receipt'],
+            'sender' => '1555',
+            'hasMedia' => true,
+            'mime' => 'application/pdf',
+            'filenameContains' => 'q3',
+        ]);
+        $uri = (string) $mock->requests()[0]->getUri();
+        self::assertStringContainsString('queryAny=invoice%2Creceipt', $uri);
+        self::assertStringContainsString('sender=1555', $uri);
+        self::assertStringContainsString('hasMedia=true', $uri);
+        self::assertStringContainsString('mime=application%2Fpdf', $uri);
+        self::assertStringContainsString('filenameContains=q3', $uri);
     }
 
     public function testGetMedia(): void

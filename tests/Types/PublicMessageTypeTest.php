@@ -52,4 +52,23 @@ final class PublicMessageTypeTest extends TestCase
         $this->expectException(ValidationError::class);
         PublicMessage::fromArray($f);
     }
+
+    public function testSourceAndSecret(): void
+    {
+        $f = self::fixture();
+        $f['source'] = 'backup';
+        $f['secret'] = 'corr-1';
+        $m = PublicMessage::fromArray($f);
+        self::assertSame('backup', $m->source);
+        self::assertSame('corr-1', $m->secret);
+        self::assertNull(PublicMessage::fromArray(self::fixture())->source);
+    }
+
+    public function testInvalidSourceThrows(): void
+    {
+        $f = self::fixture();
+        $f['source'] = 'cloud';
+        $this->expectException(ValidationError::class);
+        PublicMessage::fromArray($f);
+    }
 }

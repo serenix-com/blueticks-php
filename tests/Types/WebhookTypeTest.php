@@ -46,4 +46,12 @@ final class WebhookTypeTest extends TestCase
         $this->expectException(ValidationError::class);
         Webhook::fromArray($f);
     }
+
+    public function testSigningSecret(): void
+    {
+        $f = self::fixture();
+        $f['signingSecret'] = 'whsec_abc';
+        self::assertSame('whsec_abc', Webhook::fromArray($f)->signingSecret);
+        self::assertNull(Webhook::fromArray(self::fixture())->signingSecret);
+    }
 }

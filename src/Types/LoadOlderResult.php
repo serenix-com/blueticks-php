@@ -18,6 +18,8 @@ final class LoadOlderResult
         public readonly bool $canLoadMore,
         public readonly bool $historyUnavailable,
         public readonly ?string $error,
+        public readonly int $pagesExecuted,
+        public readonly LoadCoverage $coverage,
     ) {
     }
 
@@ -39,6 +41,18 @@ final class LoadOlderResult
         if (array_key_exists('error', $data) && $data['error'] !== null && !is_string($data['error'])) {
             throw new ValidationError(message: "Field 'error' must be string or null in LoadOlderResult response");
         }
+        if (!array_key_exists('pagesExecuted', $data) || !is_int($data['pagesExecuted'])) {
+            throw new ValidationError(
+                message: "Missing or non-int field 'pagesExecuted' in LoadOlderResult response",
+            );
+        }
+        if (!array_key_exists('coverage', $data) || !is_array($data['coverage'])) {
+            throw new ValidationError(
+                message: "Missing or non-object field 'coverage' in LoadOlderResult response",
+            );
+        }
+        /** @var array<string, mixed> $coverage */
+        $coverage = $data['coverage'];
 
         return new self(
             totalMessages: $data['totalMessages'] ?? null,
@@ -46,6 +60,8 @@ final class LoadOlderResult
             canLoadMore: $data['canLoadMore'],
             historyUnavailable: $data['historyUnavailable'],
             error: $data['error'] ?? null,
+            pagesExecuted: $data['pagesExecuted'],
+            coverage: LoadCoverage::fromArray($coverage),
         );
     }
 

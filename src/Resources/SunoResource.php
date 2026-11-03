@@ -33,7 +33,8 @@ final class SunoResource extends BaseResource
      * Submit a song generation to Suno from `lyrics` + `style`. Returns the
      * generated clip variants — poll each by id with `getSong`.
      *
-     * @param array<string, mixed> $params Required: `lyrics`, `style`.
+     * @param array<string, mixed> $params Required: `style`. `lyrics` is required
+     *   unless `instrumental` is true.
      */
     public function generateSong(array $params): GenerateSongResult
     {

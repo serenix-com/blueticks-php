@@ -27,7 +27,9 @@ final class MessagesResource extends BaseResource
      *
      * @param array<string, mixed> $params Accepts: chatId, searchToken,
      *   order (`asc`|`desc`), since, until, messageTypes (list<string>),
-     *   loadFromPhoneIfNeeded, includeMediaContent, skip, limit.
+     *   queryAny (list<string> keyword-set OR search), sender, hasMedia,
+     *   mime, filenameContains, loadFromPhoneIfNeeded, includeMediaContent,
+     *   skip, limit.
      * @return Page<PublicMessage>
      */
     public function list(array $params = []): Page
@@ -38,6 +40,10 @@ final class MessagesResource extends BaseResource
             'order',
             'since',
             'until',
+            'sender',
+            'hasMedia',
+            'mime',
+            'filenameContains',
             'loadFromPhoneIfNeeded',
             'includeMediaContent',
             'skip',
@@ -49,6 +55,9 @@ final class MessagesResource extends BaseResource
             && $params['messageTypes'] !== []
         ) {
             $query['messageTypes'] = implode(',', array_map('strval', $params['messageTypes']));
+        }
+        if (array_key_exists('queryAny', $params) && is_array($params['queryAny']) && $params['queryAny'] !== []) {
+            $query['queryAny'] = implode(',', array_map('strval', $params['queryAny']));
         }
         $env = $this->client->request('GET', '/v1/messages', $query !== [] ? ['query' => $query] : []);
         return Page::fromArray($env, fn (array $row): PublicMessage => PublicMessage::fromArray($row));
@@ -80,7 +89,8 @@ final class MessagesResource extends BaseResource
      * `sendAt`. Set `type` to `text`, `media`, or `poll`.
      *
      * @param array<string, mixed> $params Must include `type`
-     *   (`text`|`media`|`poll`). Pass `idempotency_key` to set the
+     *   (`text`|`media`|`poll`). Optional `mentions` (list of participant
+     *   JIDs to @mention in a group chat). Pass `idempotency_key` to set the
      *   Idempotency-Key header (it is stripped from the body).
      */
     public function create(string $chatId, array $params): Message
@@ -143,12 +153,29 @@ final class MessagesResource extends BaseResource
      * Load older messages.
      *
      * Ask the engine to pull older history from the connected phone.
+     * Optionally pull several pages in one call and/or stop at a target
+     * depth; the result reports how far back the chat is now loaded under
+     * `coverage`.
+     *
+     * @param array<string, mixed> $params Accepts: pages (1-10, default 1),
+     *   until_date (ISO 8601 string or epoch seconds/ms).
      */
-    public function loadOlder(string $chatId): LoadOlderResult
+    public function loadOlder(string $chatId, array $params = []): LoadOlderResult
     {
+        $requestOpts = [];
+        $body = [];
+        foreach (['pages', 'until_date'] as $k) {
+            if (array_key_exists($k, $params) && $params[$k] !== null) {
+                $body[$k] = $params[$k];
+            }
+        }
+        if ($body !== []) {
+            $requestOpts['body'] = $body;
+        }
         $env = $this->client->request(
             'POST',
             '/v1/messages/load_older/' . rawurlencode($chatId),
+            $requestOpts,
         );
         return LoadOlderResult::fromArray(self::unwrap($env));
     }

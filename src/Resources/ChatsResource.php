@@ -23,7 +23,10 @@ final class ChatsResource extends BaseResource
      * List chats, most-recent first. Offset-paginated via `limit` + `skip`.
      *
      * @param array<string, mixed> $params Accepts: searchToken,
-     *   filter (`groups`|`contacts`|`newsletters`), includeLastMessage,
+     *   filter (`groups`|`contacts`|`newsletters`),
+     *   kinds (list of `contact`|`group`|`newsletter`),
+     *   since (ISO 8601 instant; chats with a last message at/after it),
+     *   includeLastMessage,
      *   includeExtendedInfo, includeWithoutName, includeArchive, skip, limit.
      * @return Page<Chat>
      */
@@ -32,6 +35,7 @@ final class ChatsResource extends BaseResource
         $query = self::pickQuery($params, [
             'searchToken',
             'filter',
+            'since',
             'includeLastMessage',
             'includeExtendedInfo',
             'includeWithoutName',
@@ -39,6 +43,9 @@ final class ChatsResource extends BaseResource
             'skip',
             'limit',
         ]);
+        if (array_key_exists('kinds', $params) && is_array($params['kinds']) && $params['kinds'] !== []) {
+            $query['kinds'] = implode(',', array_map('strval', $params['kinds']));
+        }
         $env = $this->client->request('GET', '/v1/chats', $query !== [] ? ['query' => $query] : []);
         return Page::fromArray($env, fn (array $row): Chat => Chat::fromArray($row));
     }

@@ -34,8 +34,10 @@ final class ScheduledMessagesResource extends BaseResource
      * shape — set `type` to `text`, `media`, or `poll`.
      *
      * @param array<string, mixed> $params Must include `type`
-     *   (`text`|`media`|`poll`). Pass `idempotency_key` to set the
-     *   Idempotency-Key header (it is stripped from the body).
+     *   (`text`|`media`|`poll`). Optional `mentions` (list of participant
+     *   JIDs to @mention in a group chat) and `recipientName` (display name
+     *   shown in the scheduled-messages list). Pass `idempotency_key` to set
+     *   the Idempotency-Key header (it is stripped from the body).
      */
     public function create(string $chatId, array $params): Message
     {
@@ -69,7 +71,8 @@ final class ScheduledMessagesResource extends BaseResource
      * Update scheduled message.
      *
      * Edit a previously-queued message that has not dispatched yet. Accepts
-     * the same flat body fields as `create` (all optional here).
+     * the same flat body fields as `create` (all optional here), including
+     * `mentions`.
      *
      * @param array<string, mixed> $params
      */
