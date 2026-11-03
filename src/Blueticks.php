@@ -16,13 +16,17 @@ final class Blueticks
     public readonly Resources\AccountResource $account;
     public readonly Resources\WebhooksResource $webhooks;
     public readonly Resources\AudiencesResource $audiences;
+    public readonly Resources\BoardsResource $boards;
     public readonly Resources\CampaignsResource $campaigns;
     public readonly Resources\ChatsResource $chats;
     public readonly Resources\ContactsResource $contacts;
     public readonly Resources\EnginesResource $engines;
     public readonly Resources\GroupsResource $groups;
+    public readonly Resources\IdentityResource $identity;
+    public readonly Resources\LatestChatsResource $latest_chats;
     public readonly Resources\MessagesResource $messages;
     public readonly Resources\NewslettersResource $newsletters;
+    public readonly Resources\RealtimeResource $realtime;
     public readonly Resources\ScheduledMessagesResource $scheduled_messages;
     public readonly Resources\SunoResource $suno;
     // REGEN-BOUNDARY: resource properties end
@@ -65,13 +69,17 @@ final class Blueticks
         $this->account = new Resources\AccountResource($this);
         $this->webhooks = new Resources\WebhooksResource($this);
         $this->audiences = new Resources\AudiencesResource($this);
+        $this->boards = new Resources\BoardsResource($this);
         $this->campaigns = new Resources\CampaignsResource($this);
         $this->chats = new Resources\ChatsResource($this);
         $this->contacts = new Resources\ContactsResource($this);
         $this->engines = new Resources\EnginesResource($this);
         $this->groups = new Resources\GroupsResource($this);
+        $this->identity = new Resources\IdentityResource($this);
+        $this->latest_chats = new Resources\LatestChatsResource($this);
         $this->messages = new Resources\MessagesResource($this);
         $this->newsletters = new Resources\NewslettersResource($this);
+        $this->realtime = new Resources\RealtimeResource($this);
         $this->scheduled_messages = new Resources\ScheduledMessagesResource($this);
         $this->suno = new Resources\SunoResource($this);
         // REGEN-BOUNDARY: resource attachments end

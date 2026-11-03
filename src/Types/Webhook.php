@@ -20,6 +20,7 @@ final class Webhook
         public readonly ?string $description,
         public readonly string $status,
         public readonly string $createdAt,
+        public readonly ?string $signingSecret = null,
     ) {
     }
 
@@ -42,6 +43,7 @@ final class Webhook
             );
         }
         self::assertString($data, 'createdAt');
+        self::assertStringOrNull($data, 'signingSecret');
 
         /** @var list<string> $events */
         $events = array_values($data['events']);
@@ -53,6 +55,7 @@ final class Webhook
             description: $data['description'] ?? null,
             status: $data['status'],
             createdAt: $data['createdAt'],
+            signingSecret: $data['signingSecret'] ?? null,
         );
     }
 

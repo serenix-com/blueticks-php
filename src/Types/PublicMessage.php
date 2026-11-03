@@ -12,6 +12,8 @@ use Blueticks\Errors\ValidationError;
  */
 final class PublicMessage
 {
+    public const SOURCES = ['vault', 'backup'];
+
     public function __construct(
         public readonly WaMessageKey $waMessageKey,
         public readonly string $chatId,
@@ -27,6 +29,8 @@ final class PublicMessage
         public readonly ?string $filename,
         public readonly ?LinkPreview $linkPreview,
         public readonly ?PublicQuotedMessage $quotedMessage,
+        public readonly ?string $source = null,
+        public readonly ?string $secret = null,
     ) {
     }
 
@@ -57,6 +61,16 @@ final class PublicMessage
         }
         self::assertStringOrNull($data, 'mediaUrl');
         self::assertStringOrNull($data, 'filename');
+        self::assertStringOrNull($data, 'secret');
+        if (
+            array_key_exists('source', $data)
+            && $data['source'] !== null
+            && (!is_string($data['source']) || !in_array($data['source'], self::SOURCES, true))
+        ) {
+            throw new ValidationError(
+                message: "Field 'source' must be one of " . implode('/', self::SOURCES) . " in PublicMessage response",
+            );
+        }
 
         $linkPreview = null;
         if (array_key_exists('linkPreview', $data) && $data['linkPreview'] !== null) {
@@ -95,6 +109,8 @@ final class PublicMessage
             filename: $data['filename'] ?? null,
             linkPreview: $linkPreview,
             quotedMessage: $quotedMessage,
+            source: $data['source'] ?? null,
+            secret: $data['secret'] ?? null,
         );
     }
 

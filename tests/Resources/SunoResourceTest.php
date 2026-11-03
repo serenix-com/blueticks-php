@@ -64,6 +64,19 @@ final class SunoResourceTest extends TestCase
         self::assertSame('POST', $mock->requests()[0]->getMethod());
     }
 
+    public function testGenerateSongInstrumentalWithoutLyrics(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(201, [
+            'success' => true,
+            'data' => ['jobId' => 'job_2', 'clips' => [['id' => 'clip_1', 'status' => 'queued']]],
+        ]);
+
+        $r = $this->client($mock)->suno->generateSong(['style' => 'ambient', 'instrumental' => true]);
+        self::assertCount(1, $r->clips);
+        self::assertSame('{"style":"ambient","instrumental":true}', (string) $mock->requests()[0]->getBody());
+    }
+
     public function testGetSong(): void
     {
         $mock = new MockTransport();
