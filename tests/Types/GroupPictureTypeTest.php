@@ -12,7 +12,8 @@ final class GroupPictureTypeTest extends TestCase
 {
     public function testHappyPath(): void
     {
-        self::assertSame('https://pps.whatsapp.net/x.jpg', GroupPicture::fromArray(['url' => 'https://pps.whatsapp.net/x.jpg'])->url);
+        $url = 'https://pps.whatsapp.net/x.jpg';
+        self::assertSame($url, GroupPicture::fromArray(['url' => $url])->url);
     }
 
     public function testNullUrlAllowed(): void

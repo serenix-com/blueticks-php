@@ -8,7 +8,7 @@ use Blueticks\BaseResource;
 use Blueticks\Errors\ValidationError;
 use Blueticks\Types\Group;
 use Blueticks\Types\GroupPicture;
-use Blueticks\Types\OkResponse;
+use Blueticks\Types\GroupPictureRemoved;
 use Blueticks\Types\Page;
 
 /**
@@ -183,10 +183,10 @@ final class GroupsResource extends BaseResource
      * Gateway (Baileys) engine only: a Chrome-extension-only account gets
      * `501 unsupported_command`. Requires `groups:write`.
      */
-    public function removePicture(string $groupId): OkResponse
+    public function removePicture(string $groupId): GroupPictureRemoved
     {
         $env = $this->client->request('DELETE', '/v1/groups/' . rawurlencode($groupId) . '/picture');
-        return OkResponse::fromArray(self::unwrap($env));
+        return GroupPictureRemoved::fromArray(self::unwrap($env));
     }
 
     /**
