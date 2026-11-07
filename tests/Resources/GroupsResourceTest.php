@@ -112,6 +112,36 @@ final class GroupsResourceTest extends TestCase
         self::assertSame('PUT', $mock->requests()[0]->getMethod());
     }
 
+    public function testGetPicture(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => ['url' => 'https://pps.whatsapp.net/x.jpg']]);
+
+        $pic = $this->client($mock)->groups->getPicture('123@g.us');
+        self::assertSame('GET', $mock->requests()[0]->getMethod());
+        self::assertStringEndsWith('/v1/groups/123%40g.us/picture', (string) $mock->requests()[0]->getUri());
+        self::assertSame('https://pps.whatsapp.net/x.jpg', $pic->url);
+    }
+
+    public function testGetPictureNullUrl(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => ['url' => null]]);
+
+        self::assertNull($this->client($mock)->groups->getPicture('123@g.us')->url);
+    }
+
+    public function testRemovePicture(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => ['ok' => true]]);
+
+        $res = $this->client($mock)->groups->removePicture('123@g.us');
+        self::assertSame('DELETE', $mock->requests()[0]->getMethod());
+        self::assertStringEndsWith('/v1/groups/123%40g.us/picture', (string) $mock->requests()[0]->getUri());
+        self::assertTrue($res->ok);
+    }
+
     public function testLeaveReturnsVoidOn204(): void
     {
         $mock = new MockTransport();

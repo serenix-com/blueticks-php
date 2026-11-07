@@ -7,6 +7,8 @@ namespace Blueticks\Resources;
 use Blueticks\BaseResource;
 use Blueticks\Errors\ValidationError;
 use Blueticks\Types\Group;
+use Blueticks\Types\GroupPicture;
+use Blueticks\Types\GroupPictureRemoved;
 use Blueticks\Types\Page;
 
 /**
@@ -161,6 +163,30 @@ final class GroupsResource extends BaseResource
             ['body' => $body],
         );
         return Group::fromArray(self::unwrap($env));
+    }
+
+    /**
+     * Get group picture.
+     *
+     * The current picture as a short-lived WhatsApp CDN `url`, or `url: null`
+     * when the group has none. Requires `groups:read`.
+     */
+    public function getPicture(string $groupId): GroupPicture
+    {
+        $env = $this->client->request('GET', '/v1/groups/' . rawurlencode($groupId) . '/picture');
+        return GroupPicture::fromArray(self::unwrap($env));
+    }
+
+    /**
+     * Remove group picture.
+     *
+     * Gateway (Baileys) engine only: a Chrome-extension-only account gets
+     * `501 unsupported_command`. Requires `groups:write`.
+     */
+    public function removePicture(string $groupId): GroupPictureRemoved
+    {
+        $env = $this->client->request('DELETE', '/v1/groups/' . rawurlencode($groupId) . '/picture');
+        return GroupPictureRemoved::fromArray(self::unwrap($env));
     }
 
     /**
