@@ -71,4 +71,36 @@ final class PublicMessageTypeTest extends TestCase
         $this->expectException(ValidationError::class);
         PublicMessage::fromArray($f);
     }
+
+    public function testNewSpecFieldsAreParsed(): void
+    {
+        $f = self::fixture();
+        $f['waType'] = 'buttons_response';
+        $f['subtype'] = 'add';
+        $f['groupEvent'] = ['action' => 'add', 'actor' => '1@c.us', 'targets' => ['2@c.us']];
+        $f['call'] = ['direction' => 'in', 'media' => 'video', 'outcome' => 'missed', 'isGroup' => false];
+        $f['interactive'] = ['kind' => 'buttons_response', 'selectedId' => 'b1', 'selectedTitle' => 'Yes'];
+        $f['reactions'] = [['emoji' => "\u{2764}", 'senderId' => '1@c.us', 'fromMe' => false]];
+        $m = PublicMessage::fromArray($f);
+        self::assertSame('buttons_response', $m->waType);
+        self::assertSame('add', $m->subtype);
+        self::assertNotNull($m->groupEvent);
+        self::assertSame(['2@c.us'], $m->groupEvent->targets);
+        self::assertNotNull($m->call);
+        self::assertSame('missed', $m->call->outcome);
+        self::assertNotNull($m->interactive);
+        self::assertSame('b1', $m->interactive->selectedId);
+        self::assertNotNull($m->reactions);
+        self::assertSame("\u{2764}", $m->reactions[0]->emoji);
+    }
+
+    public function testNewSpecFieldsDefaultToNull(): void
+    {
+        $m = PublicMessage::fromArray(self::fixture());
+        self::assertNull($m->waType);
+        self::assertNull($m->groupEvent);
+        self::assertNull($m->call);
+        self::assertNull($m->interactive);
+        self::assertNull($m->reactions);
+    }
 }

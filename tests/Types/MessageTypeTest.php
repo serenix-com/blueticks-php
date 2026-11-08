@@ -65,4 +65,49 @@ final class MessageTypeTest extends TestCase
         $this->expectException(ValidationError::class);
         Message::fromArray($f);
     }
+
+    public function testNewSpecFieldsAreParsed(): void
+    {
+        $m = Message::fromArray([
+            'id' => 'msg_1',
+            'to' => '1@c.us',
+            'type' => 'text',
+            'text' => 'hi',
+            'status' => 'pending',
+            'createdAt' => '2026-04-23T10:00:00Z',
+            'recipientName' => 'Alice',
+            'recurrence' => [
+                'frequency' => 'monthly',
+                'interval' => 1,
+                'byWeekday' => null,
+                'endsAfter' => null,
+                'endsOn' => '2027-01-01T00:00:00Z',
+                'timezone' => 'UTC',
+            ],
+            'waLabels' => ['requested' => 1, 'applied' => true, 'error' => null],
+            'warning' => ['code' => 'no_engine_connected', 'message' => 'No engine.'],
+        ]);
+        self::assertSame('Alice', $m->recipientName);
+        self::assertNotNull($m->recurrence);
+        self::assertSame('monthly', $m->recurrence->frequency);
+        self::assertNotNull($m->waLabels);
+        self::assertTrue($m->waLabels->applied);
+        self::assertNotNull($m->warning);
+        self::assertSame('no_engine_connected', $m->warning->code);
+    }
+
+    public function testNewSpecFieldsDefaultToNull(): void
+    {
+        $m = Message::fromArray([
+            'id' => 'msg_1',
+            'to' => '1@c.us',
+            'type' => 'text',
+            'status' => 'pending',
+            'createdAt' => '2026-04-23T10:00:00Z',
+        ]);
+        self::assertNull($m->recipientName);
+        self::assertNull($m->recurrence);
+        self::assertNull($m->waLabels);
+        self::assertNull($m->warning);
+    }
 }

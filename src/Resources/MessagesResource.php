@@ -29,7 +29,7 @@ final class MessagesResource extends BaseResource
      *   order (`asc`|`desc`), since, until, messageTypes (list<string>),
      *   queryAny (list<string> keyword-set OR search), sender, hasMedia,
      *   mime, filenameContains, loadFromPhoneIfNeeded, includeMediaContent,
-     *   skip, limit.
+     *   engine (`gateway`|`regular`), engineId, numberId, skip, limit.
      * @return Page<PublicMessage>
      */
     public function list(array $params = []): Page
@@ -37,6 +37,9 @@ final class MessagesResource extends BaseResource
         $query = self::pickQuery($params, [
             'chatId',
             'searchToken',
+            'engine',
+            'engineId',
+            'numberId',
             'order',
             'since',
             'until',

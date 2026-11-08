@@ -28,12 +28,13 @@ final class CampaignsResource extends BaseResource
      * Create campaign.
      *
      * @param array<string, mixed> $params
-     *   Accepts: text, mediaUrl, mediaCaption, onMissingVariable (`fail`|`skip`).
+     *   Accepts: text, mediaUrl, mediaCaption, onMissingVariable (`fail`|`skip`),
+     *   sendAt (ISO 8601 instant with offset; omit to send immediately).
      */
     public function create(string $name, string $audienceId, array $params = []): Campaign
     {
         $body = ['name' => $name, 'audienceId' => $audienceId];
-        foreach (['text', 'mediaUrl', 'mediaCaption', 'onMissingVariable'] as $k) {
+        foreach (['text', 'mediaUrl', 'mediaCaption', 'onMissingVariable', 'sendAt'] as $k) {
             if (array_key_exists($k, $params)) {
                 $body[$k] = $params[$k];
             }

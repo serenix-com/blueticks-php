@@ -23,12 +23,24 @@ final class GroupsResource extends BaseResource
     /**
      * List groups. Offset-paginated via `limit` + `skip`.
      *
-     * @param array<string, mixed> $params Accepts: searchToken, includeArchive, skip, limit.
+     * @param array<string, mixed> $params Accepts: searchToken,
+     *   engine (`gateway`|`regular`), engineId, numberId, phone, fanoutLimit,
+     *   includeArchive, skip, limit.
      * @return Page<Group>
      */
     public function list(array $params = []): Page
     {
-        $query = self::pickQuery($params, ['searchToken', 'includeArchive', 'skip', 'limit']);
+        $query = self::pickQuery($params, [
+            'searchToken',
+            'engine',
+            'engineId',
+            'numberId',
+            'phone',
+            'fanoutLimit',
+            'includeArchive',
+            'skip',
+            'limit',
+        ]);
         $env = $this->client->request('GET', '/v1/groups', $query !== [] ? ['query' => $query] : []);
         return Page::fromArray($env, fn (array $row): Group => Group::fromArray($row));
     }

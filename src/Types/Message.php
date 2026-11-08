@@ -59,6 +59,10 @@ final class Message
         public readonly ?string $failureReason,
         public readonly ?string $secret,
         public readonly ?LinkPreview $linkPreview,
+        public readonly ?string $recipientName = null,
+        public readonly ?RecurrenceResponse $recurrence = null,
+        public readonly ?MessageWaLabelsResult $waLabels = null,
+        public readonly ?MessageWarning $warning = null,
     ) {
     }
 
@@ -106,6 +110,11 @@ final class Message
             $linkPreview = LinkPreview::fromArray($lp);
         }
 
+        self::assertStringOrNull($data, 'recipientName');
+        $recurrence = self::objectOrNull($data, 'recurrence', RecurrenceResponse::fromArray(...));
+        $waLabels = self::objectOrNull($data, 'waLabels', MessageWaLabelsResult::fromArray(...));
+        $warning = self::objectOrNull($data, 'warning', MessageWarning::fromArray(...));
+
         return new self(
             id: $data['id'] ?? null,
             waMessageKey: $waMessageKey,
@@ -128,7 +137,33 @@ final class Message
             failureReason: $data['failureReason'] ?? null,
             secret: $data['secret'] ?? null,
             linkPreview: $linkPreview,
+            recipientName: $data['recipientName'] ?? null,
+            recurrence: $recurrence,
+            waLabels: $waLabels,
+            warning: $warning,
         );
+    }
+
+    /**
+     * Parse an optional nested object. Absent or null yields null; a
+     * non-object value is a ValidationError.
+     *
+     * @template T of object
+     * @param array<string, mixed>              $data
+     * @param callable(array<string, mixed>): T $factory
+     * @return ?T
+     */
+    private static function objectOrNull(array $data, string $key, callable $factory): ?object
+    {
+        if (!array_key_exists($key, $data) || $data[$key] === null) {
+            return null;
+        }
+        if (!is_array($data[$key])) {
+            throw new ValidationError(message: "Field '{$key}' must be an object in Message response");
+        }
+        /** @var array<string, mixed> $obj */
+        $obj = $data[$key];
+        return $factory($obj);
     }
 
     /**

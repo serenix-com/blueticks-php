@@ -31,6 +31,13 @@ final class PublicMessage
         public readonly ?PublicQuotedMessage $quotedMessage,
         public readonly ?string $source = null,
         public readonly ?string $secret = null,
+        public readonly ?string $waType = null,
+        public readonly ?string $subtype = null,
+        public readonly ?PublicGroupEvent $groupEvent = null,
+        public readonly ?PublicCall $call = null,
+        public readonly ?PublicInteractive $interactive = null,
+        /** @var ?list<PublicReaction> */
+        public readonly ?array $reactions = null,
     ) {
     }
 
@@ -94,6 +101,29 @@ final class PublicMessage
             $quotedMessage = PublicQuotedMessage::fromArray($qm);
         }
 
+        self::assertStringOrNull($data, 'waType');
+        self::assertStringOrNull($data, 'subtype');
+        $groupEvent = self::objectOrNull($data, 'groupEvent', PublicGroupEvent::fromArray(...));
+        $call = self::objectOrNull($data, 'call', PublicCall::fromArray(...));
+        $interactive = self::objectOrNull($data, 'interactive', PublicInteractive::fromArray(...));
+
+        $reactions = null;
+        if (array_key_exists('reactions', $data) && $data['reactions'] !== null) {
+            if (!is_array($data['reactions'])) {
+                throw new ValidationError(message: "Field 'reactions' must be an array in PublicMessage response");
+            }
+            $reactions = [];
+            foreach ($data['reactions'] as $r) {
+                if (!is_array($r)) {
+                    throw new ValidationError(
+                        message: "Field 'reactions' must contain objects in PublicMessage response",
+                    );
+                }
+                /** @var array<string, mixed> $r */
+                $reactions[] = PublicReaction::fromArray($r);
+            }
+        }
+
         return new self(
             waMessageKey: WaMessageKey::fromArray($keyData),
             chatId: $data['chatId'],
@@ -111,7 +141,35 @@ final class PublicMessage
             quotedMessage: $quotedMessage,
             source: $data['source'] ?? null,
             secret: $data['secret'] ?? null,
+            waType: $data['waType'] ?? null,
+            subtype: $data['subtype'] ?? null,
+            groupEvent: $groupEvent,
+            call: $call,
+            interactive: $interactive,
+            reactions: $reactions,
         );
+    }
+
+    /**
+     * Parse an optional nested object. Absent or null yields null; a
+     * non-object value is a ValidationError.
+     *
+     * @template T of object
+     * @param array<string, mixed>        $data
+     * @param callable(array<string, mixed>): T $factory
+     * @return ?T
+     */
+    private static function objectOrNull(array $data, string $key, callable $factory): ?object
+    {
+        if (!array_key_exists($key, $data) || $data[$key] === null) {
+            return null;
+        }
+        if (!is_array($data[$key])) {
+            throw new ValidationError(message: "Field '{$key}' must be an object in PublicMessage response");
+        }
+        /** @var array<string, mixed> $obj */
+        $obj = $data[$key];
+        return $factory($obj);
     }
 
     /** @param array<string, mixed> $data */

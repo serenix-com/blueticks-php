@@ -20,11 +20,20 @@ final class LatestChatsResource extends BaseResource
      * its latest messages (newest first), in a single call.
      *
      * @param array<string, mixed> $params Accepts: numberOfChats (default 50),
-     *   numberOfMessages (default 20).
+     *   numberOfMessages (default 20), engine (`gateway`|`regular`), engineId,
+     *   numberId, phone, fanoutLimit.
      */
     public function list(array $params = []): LatestChatsResponse
     {
-        $query = self::pickQuery($params, ['numberOfChats', 'numberOfMessages']);
+        $query = self::pickQuery($params, [
+            'numberOfChats',
+            'numberOfMessages',
+            'engine',
+            'engineId',
+            'numberId',
+            'phone',
+            'fanoutLimit',
+        ]);
         $env = $this->client->request('GET', '/v1/latest-chats', $query !== [] ? ['query' => $query] : []);
         return LatestChatsResponse::fromArray(self::unwrap($env));
     }

@@ -16,12 +16,21 @@ final class ScheduledMessagesResource extends BaseResource
      * List scheduled messages, newest first. Offset-paginated via `limit` + `skip`.
      *
      * @param array<string, mixed> $params Accepts: chatId, searchToken,
-     *   status, order (`asc`|`desc`), skip, limit.
+     *   status, includeSent, includePreview, order (`asc`|`desc`), skip, limit.
      * @return Page<Message>
      */
     public function list(array $params = []): Page
     {
-        $query = self::pickQuery($params, ['chatId', 'searchToken', 'status', 'order', 'skip', 'limit']);
+        $query = self::pickQuery($params, [
+            'chatId',
+            'searchToken',
+            'status',
+            'includeSent',
+            'includePreview',
+            'order',
+            'skip',
+            'limit',
+        ]);
         $env = $this->client->request('GET', '/v1/scheduled-messages', $query !== [] ? ['query' => $query] : []);
         return Page::fromArray($env, fn (array $row): Message => Message::fromArray($row));
     }
@@ -68,6 +77,18 @@ final class ScheduledMessagesResource extends BaseResource
     }
 
     /**
+     * Cancel scheduled message.
+     *
+     * Cancel a scheduled message that has not been sent yet. Returns the
+     * message in its updated state.
+     */
+    public function cancel(string $id): Message
+    {
+        $env = $this->client->request('POST', '/v1/scheduled-messages/' . rawurlencode($id) . '/cancel');
+        return Message::fromArray(self::unwrap($env));
+    }
+
+    /**
      * Update scheduled message.
      *
      * Edit a previously-queued message that has not dispatched yet. Accepts
@@ -106,8 +127,14 @@ final class ScheduledMessagesResource extends BaseResource
     {
         $query = [];
         foreach ($keys as $k) {
-            if (array_key_exists($k, $params) && $params[$k] !== null && is_scalar($params[$k])) {
-                $query[$k] = $params[$k];
+            if (!array_key_exists($k, $params) || $params[$k] === null) {
+                continue;
+            }
+            $v = $params[$k];
+            if (is_bool($v)) {
+                $query[$k] = $v ? 'true' : 'false';
+            } elseif (is_scalar($v)) {
+                $query[$k] = $v;
             }
         }
         return $query;

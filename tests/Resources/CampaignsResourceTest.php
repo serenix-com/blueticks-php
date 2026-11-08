@@ -113,4 +113,28 @@ final class CampaignsResourceTest extends TestCase
             self::assertSame('req_x', $e->requestId);
         }
     }
+
+    public function testCreatePassesSendAt(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [
+            'cmpId' => 'cmp_1',
+            'name' => 'Promo',
+            'audienceId' => 'aud_1',
+            'status' => 'pending',
+            'totalCount' => 0,
+            'sentCount' => 0,
+            'deliveredCount' => 0,
+            'readCount' => 0,
+            'failedCount' => 0,
+            'createdAt' => '2026-04-23T10:00:00Z',
+        ]]);
+
+        $this->client($mock)->campaigns->create('Promo', 'aud_1', [
+            'text' => 'hi',
+            'sendAt' => '2026-12-01T09:00:00+02:00',
+        ]);
+        $body = json_decode((string) $mock->requests()[0]->getBody(), true);
+        self::assertSame('2026-12-01T09:00:00+02:00', $body['sendAt']);
+    }
 }

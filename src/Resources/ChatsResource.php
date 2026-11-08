@@ -10,6 +10,7 @@ use Blueticks\Types\Chat;
 use Blueticks\Types\OkResponse;
 use Blueticks\Types\Page;
 use Blueticks\Types\Participant;
+use Blueticks\Types\WaLabel;
 
 /**
  * WhatsApp engine chat operations.
@@ -26,8 +27,9 @@ final class ChatsResource extends BaseResource
      *   filter (`groups`|`contacts`|`newsletters`),
      *   kinds (list of `contact`|`group`|`newsletter`),
      *   since (ISO 8601 instant; chats with a last message at/after it),
-     *   includeLastMessage,
-     *   includeExtendedInfo, includeWithoutName, includeArchive, skip, limit.
+     *   includeLastMessage, includeWithoutName, includeArchive,
+     *   engine (`gateway`|`regular`), engineId, numberId, phone,
+     *   fanoutLimit, skip, limit.
      * @return Page<Chat>
      */
     public function list(array $params = []): Page
@@ -37,9 +39,13 @@ final class ChatsResource extends BaseResource
             'filter',
             'since',
             'includeLastMessage',
-            'includeExtendedInfo',
             'includeWithoutName',
             'includeArchive',
+            'engine',
+            'engineId',
+            'numberId',
+            'phone',
+            'fanoutLimit',
             'skip',
             'limit',
         ]);
@@ -64,18 +70,65 @@ final class ChatsResource extends BaseResource
     /**
      * List chat participants. Offset-paginated via `limit` + `skip`.
      *
-     * @param array<string, mixed> $params Accepts: searchToken, skip, limit.
+     * @param array<string, mixed> $params Accepts: searchToken,
+     *   engine (`gateway`|`regular`), engineId, numberId, phone,
+     *   fanoutLimit, skip, limit.
      * @return Page<Participant>
      */
     public function listParticipants(string $chatId, array $params = []): Page
     {
-        $query = self::pickQuery($params, ['searchToken', 'skip', 'limit']);
+        $query = self::pickQuery($params, [
+            'searchToken',
+            'engine',
+            'engineId',
+            'numberId',
+            'phone',
+            'fanoutLimit',
+            'skip',
+            'limit',
+        ]);
         $env = $this->client->request(
             'GET',
             '/v1/chats/' . rawurlencode($chatId) . '/participants',
             $query !== [] ? ['query' => $query] : [],
         );
         return Page::fromArray($env, fn (array $row): Participant => Participant::fromArray($row));
+    }
+
+    /**
+     * Get chat labels.
+     *
+     * List the native WhatsApp Business labels currently applied to a chat.
+     *
+     * @return list<WaLabel>
+     */
+    public function listWaLabels(string $chatId): array
+    {
+        $env = $this->client->request('GET', '/v1/chats/' . rawurlencode($chatId) . '/wa-labels');
+        $out = [];
+        foreach (self::unwrapList($env) as $row) {
+            $out[] = WaLabel::fromArray($row);
+        }
+        return $out;
+    }
+
+    /**
+     * Set chat labels.
+     *
+     * Replace the full set of native WhatsApp Business labels on a chat.
+     * Pass an empty list to clear them. At most 20 ids; get the ids from
+     * `waLabels->list()`.
+     *
+     * @param list<string> $labelIds
+     */
+    public function updateWaLabels(string $chatId, array $labelIds): OkResponse
+    {
+        $env = $this->client->request(
+            'PATCH',
+            '/v1/chats/' . rawurlencode($chatId) . '/wa-labels',
+            ['body' => ['labelIds' => $labelIds]],
+        );
+        return OkResponse::fromArray(self::unwrap($env));
     }
 
     /**
@@ -125,6 +178,27 @@ final class ChatsResource extends BaseResource
             }
         }
         return $query;
+    }
+
+    /**
+     * @param array<string, mixed> $env
+     * @return list<array<string, mixed>>
+     */
+    private static function unwrapList(array $env): array
+    {
+        $data = $env['data'] ?? null;
+        if (!is_array($data)) {
+            throw new ValidationError(message: 'Malformed API response: missing "data" array');
+        }
+        $out = [];
+        foreach ($data as $row) {
+            if (!is_array($row)) {
+                throw new ValidationError(message: 'Malformed API response: expected an array of objects');
+            }
+            /** @var array<string, mixed> $row */
+            $out[] = $row;
+        }
+        return $out;
     }
 
     /**
