@@ -29,6 +29,8 @@ final class Blueticks
     public readonly Resources\RealtimeResource $realtime;
     public readonly Resources\ScheduledMessagesResource $scheduled_messages;
     public readonly Resources\SunoResource $suno;
+    public readonly Resources\UploadsResource $uploads;
+    public readonly Resources\WaLabelsResource $wa_labels;
     // REGEN-BOUNDARY: resource properties end
 
     /**
@@ -82,6 +84,8 @@ final class Blueticks
         $this->realtime = new Resources\RealtimeResource($this);
         $this->scheduled_messages = new Resources\ScheduledMessagesResource($this);
         $this->suno = new Resources\SunoResource($this);
+        $this->uploads = new Resources\UploadsResource($this);
+        $this->wa_labels = new Resources\WaLabelsResource($this);
         // REGEN-BOUNDARY: resource attachments end
     }
 

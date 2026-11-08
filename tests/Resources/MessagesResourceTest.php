@@ -263,4 +263,79 @@ final class MessagesResourceTest extends TestCase
             self::assertSame('req_x', $e->requestId);
         }
     }
+
+    public function testListEngineTargetingQuery(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [], 'limit' => 25, 'skip' => 0, 'total' => 0]);
+
+        $this->client($mock)->messages->list(['engine' => 'gateway', 'engineId' => 'eng_1', 'numberId' => 'num_1']);
+        $uri = (string) $mock->requests()[0]->getUri();
+        self::assertStringContainsString('engine=gateway', $uri);
+        self::assertStringContainsString('engineId=eng_1', $uri);
+        self::assertStringContainsString('numberId=num_1', $uri);
+    }
+
+    public function testListExposesCoverageAndAnsweredBy(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, [
+            'success' => true,
+            'data' => [],
+            'limit' => 25,
+            'skip' => 0,
+            'total' => 0,
+            'answeredBy' => ['engineId' => 'eng_1', 'numberId' => 'num_1', 'phoneNumber' => '972500000000'],
+            'nextCursor' => '25',
+            'hasMore' => true,
+            'coverage' => ['messagesScanned' => 40, 'truncated' => false],
+            'autoLoadedPages' => 0,
+            'sinceReached' => true,
+            'sources' => ['backup' => 3],
+        ]);
+
+        $page = $this->client($mock)->messages->list(['chatId' => '1@c.us']);
+        self::assertNotNull($page->answeredBy);
+        self::assertSame('eng_1', $page->answeredBy->engineId);
+        self::assertSame('25', $page->nextCursor);
+        self::assertTrue($page->hasMore);
+        self::assertNotNull($page->coverage);
+        self::assertSame(40, $page->coverage->messagesScanned);
+        self::assertSame(0, $page->autoLoadedPages);
+        self::assertTrue($page->sinceReached);
+        self::assertSame(['backup' => 3], $page->sources);
+    }
+
+    public function testListPlainPageHasNullExtras(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [], 'limit' => 25, 'skip' => 0, 'total' => 0]);
+
+        $page = $this->client($mock)->messages->list();
+        self::assertNull($page->answeredBy);
+        self::assertNull($page->nextCursor);
+        self::assertNull($page->coverage);
+    }
+
+    public function testCreatePassesWaLabelIdsAndMediaFileId(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [
+            'id' => 'msg_1',
+            'to' => '1@c.us',
+            'type' => 'media',
+            'status' => 'sent',
+            'createdAt' => '2026-04-23T10:00:00Z',
+        ]]);
+
+        $this->client($mock)->messages->create('1@c.us', [
+            'type' => 'media',
+            'mediaFileId' => 'file_1',
+            'mediaMimeType' => 'application/pdf',
+            'waLabelIds' => ['lbl_1'],
+        ]);
+        $body = json_decode((string) $mock->requests()[0]->getBody(), true);
+        self::assertSame('file_1', $body['mediaFileId']);
+        self::assertSame(['lbl_1'], $body['waLabelIds']);
+    }
 }

@@ -30,13 +30,16 @@ final class ContactsResource extends BaseResource
      *
      * List the groups the connected account shares with this contact.
      *
+     * @param array<string, mixed> $params Accepts: skip, limit.
      * @return list<Group>
      */
-    public function commonGroups(string $contactId): array
+    public function commonGroups(string $contactId, array $params = []): array
     {
+        $query = self::pickQuery($params, ['skip', 'limit']);
         $env = $this->client->request(
             'GET',
             '/v1/contacts/' . rawurlencode($contactId) . '/common_groups',
+            $query !== [] ? ['query' => $query] : [],
         );
         $out = [];
         foreach (self::unwrapList($env) as $row) {

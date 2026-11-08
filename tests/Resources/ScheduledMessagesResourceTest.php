@@ -119,4 +119,71 @@ final class ScheduledMessagesResourceTest extends TestCase
             self::assertSame('req_x', $e->requestId);
         }
     }
+
+    public function testCancel(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [
+            'id' => 'msg_1',
+            'to' => '1@c.us',
+            'type' => 'text',
+            'text' => 'hi',
+            'status' => 'cancelled',
+            'createdAt' => '2026-04-23T10:00:00Z',
+        ]]);
+
+        $m = $this->client($mock)->scheduled_messages->cancel('msg_1');
+        self::assertInstanceOf(Message::class, $m);
+        self::assertSame('cancelled', $m->status);
+        self::assertSame('POST', $mock->requests()[0]->getMethod());
+        self::assertSame('/v1/scheduled-messages/msg_1/cancel', $mock->requests()[0]->getUri()->getPath());
+    }
+
+    public function testCancel401(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(401, ['error' => [
+            'code' => 'authentication_required',
+            'message' => 'bad key',
+            'request_id' => 'req_x',
+        ]]);
+
+        try {
+            $this->client($mock)->scheduled_messages->cancel('msg_1');
+            self::fail('Expected AuthenticationError');
+        } catch (AuthenticationError $e) {
+            self::assertSame(401, $e->statusCode);
+            self::assertSame('authentication_required', $e->code);
+            self::assertSame('req_x', $e->requestId);
+        }
+    }
+
+    public function testListIncludeSentAndPreviewQuery(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [], 'limit' => 25, 'skip' => 0, 'total' => 0]);
+
+        $this->client($mock)->scheduled_messages->list(['includeSent' => true, 'includePreview' => false]);
+        $uri = (string) $mock->requests()[0]->getUri();
+        self::assertStringContainsString('includeSent=true', $uri);
+        self::assertStringContainsString('includePreview=false', $uri);
+    }
+
+    public function testCreateWithoutTypeAndRecurrencePassesThrough(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => self::messageFixture()]);
+
+        $recurrence = ['frequency' => 'daily', 'interval' => 1, 'endsAfter' => 5];
+        $this->client($mock)->scheduled_messages->create('1@c.us', [
+            'text' => 'hi',
+            'sendAt' => '2026-12-01T09:00:00+02:00',
+            'recurrence' => $recurrence,
+            'waLabelIds' => ['lbl_1'],
+        ]);
+        $body = json_decode((string) $mock->requests()[0]->getBody(), true);
+        self::assertArrayNotHasKey('type', $body);
+        self::assertSame($recurrence, $body['recurrence']);
+        self::assertSame(['lbl_1'], $body['waLabelIds']);
+    }
 }

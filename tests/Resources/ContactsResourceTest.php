@@ -75,4 +75,15 @@ final class ContactsResourceTest extends TestCase
             self::assertSame('req_x', $e->requestId);
         }
     }
+
+    public function testCommonGroupsLimitAndSkipQuery(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => []]);
+
+        $this->client($mock)->contacts->commonGroups('1@c.us', ['limit' => 10, 'skip' => 5]);
+        $uri = (string) $mock->requests()[0]->getUri();
+        self::assertStringContainsString('limit=10', $uri);
+        self::assertStringContainsString('skip=5', $uri);
+    }
 }

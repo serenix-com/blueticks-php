@@ -6,13 +6,13 @@ namespace Blueticks\Types;
 
 /**
  * Marker for the discriminated request body accepted by
- * `POST /v1/chats/{chat_id}/messages` (spec schema `SendInChatRequest`).
+ * `POST /v1/messages/{chatId}` (spec schema `SendInChatRequest`).
  *
  * The PHP SDK passes request bodies as associative arrays — see
- * `ChatsResource::sendMessage()`. This class exposes the discriminator
+ * `MessagesResource::create()`. This class exposes the discriminator
  * values as constants so callers don't hand-type the magic strings:
  *
- *   $bt->chats->sendMessage('1234@c.us', [
+ *   $bt->messages->create('1234@c.us', [
  *       'type' => SendInChatRequest::TYPE_TEXT,
  *       'text' => 'hi',
  *   ]);

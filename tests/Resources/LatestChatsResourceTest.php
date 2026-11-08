@@ -90,4 +90,21 @@ final class LatestChatsResourceTest extends TestCase
             self::assertUnauthorized($e);
         }
     }
+
+    public function testListEngineTargetingQuery(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [
+            'chats' => [],
+            'totalChats' => 0,
+            'numberOfChats' => 50,
+            'numberOfMessages' => 20,
+        ]]);
+
+        $this->client($mock)->latest_chats->list(['engine' => 'gateway', 'numberId' => 'num_1', 'fanoutLimit' => 2]);
+        $uri = (string) $mock->requests()[0]->getUri();
+        self::assertStringContainsString('engine=gateway', $uri);
+        self::assertStringContainsString('numberId=num_1', $uri);
+        self::assertStringContainsString('fanoutLimit=2', $uri);
+    }
 }

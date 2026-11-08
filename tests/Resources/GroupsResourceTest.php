@@ -169,4 +169,16 @@ final class GroupsResourceTest extends TestCase
             self::assertSame('req_x', $e->requestId);
         }
     }
+
+    public function testListEngineTargetingQuery(): void
+    {
+        $mock = new MockTransport();
+        $mock->enqueueJson(200, ['success' => true, 'data' => [], 'limit' => 25, 'skip' => 0, 'total' => 0]);
+
+        $this->client($mock)->groups->list(['engine' => 'regular', 'engineId' => 'eng_1', 'fanoutLimit' => 4]);
+        $uri = (string) $mock->requests()[0]->getUri();
+        self::assertStringContainsString('engine=regular', $uri);
+        self::assertStringContainsString('engineId=eng_1', $uri);
+        self::assertStringContainsString('fanoutLimit=4', $uri);
+    }
 }
